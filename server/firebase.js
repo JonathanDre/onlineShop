@@ -13,4 +13,3 @@ const db = getFirestore(app)
 const storage = getStorage();
 module.exports = {db, storage}
 
-
