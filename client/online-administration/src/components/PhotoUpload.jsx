@@ -4,7 +4,7 @@ import { ref, uploadBytes, listAll, getDownloadURL, deleteObject  } from "fireba
 import { v4 as uuidv4 } from 'uuid';
 
 
-const PhotoUploadForm = ({ user, imageList, setImageList, handleImageDelete }) => {
+const PhotoUploadForm = ({ user, setImage}) => {
     const [photo, setPhoto] = useState(null);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState(null);
@@ -49,30 +49,13 @@ const PhotoUploadForm = ({ user, imageList, setImageList, handleImageDelete }) =
             uploadBytes(imageRef, photo).then( async (snapshot) =>  {
                 getDownloadURL(snapshot.ref).then(async (url) => {
 
-                    setImageList((prev) => [...prev, { id: id, url }])
+                    setImage({ id: id, url })
                 })
         })
         }
     };
 
-    const updateUserInfo = async () => {
-        console.log("imageList", imageList)
-        await fetch(`http://localhost:3000/user/updateUser`,{
-                        method: "POST",
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({
-                            urls: imageList,
-                            mainUrl: imageList[0]
-                        })
-                    }).then((response)=>{
-                        console.log(response)
-                    }).catch((err)=>{
-                        console.log("error", err)
-                    })
-    }
+   
 
     /*useEffect(() => {
         // Render only three times
@@ -86,11 +69,10 @@ const PhotoUploadForm = ({ user, imageList, setImageList, handleImageDelete }) =
       }, [renderCount, imageList]);*/
 
     return (
-        <div>
-            <input type="file" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Upload</button>
-            {urlState && null}
-        </div>
+        <>
+            <input className='border-2 bg-transparent text-white' type="file" onChange={handleFileChange} />
+            <button className='border-2 bg-transparent border-white mt-3' onClick={handleUpload}>Upload</button>
+        </>
     );
 };
 

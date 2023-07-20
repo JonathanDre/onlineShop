@@ -1,15 +1,16 @@
 import ItemComponent from "./../components/Item"
 import axios from "axios"
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useContext } from 'react';
+import ChatContext from "../ChatContext";
 const Shop = () => {
     const [data, setData] = useState([]);
-
+  const {chatOpened, inCall} = useContext(ChatContext)
+  
         useEffect( () => {
             const fetchData = async () => {
             const token = localStorage.getItem('token');
             // Make a GET request to the API endpoint
-            await axios.get('http://localhost:3000/subscriptions/shop', {
+            await axios.get(`${import.meta.env.VITE_SERVER_URL}/subscriptions/shop`, {
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
@@ -27,13 +28,19 @@ const Shop = () => {
             fetchData()
         }, []);
     
-        return (
-            <div>
-              {/* Display the fetched data */}
-              {data.map(item => (
-                <ItemComponent item = {item} key = {item.id}/>
-              ))}
+        return (<>
+
+        {!chatOpened && !inCall &&
+          <div className="min-h-screen flex flex-col items-center" style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
+              <div className="grid grid-cols-2 gap-4 my-10 w-4/5 justify-center text-center items-center">
+                {data.map(item => (
+                  <ItemComponent item = {item} key = {item.id}/>
+                  ))}
             </div>
+          </div>
+                }
+                  </>
+
           );
 }
 export default Shop;

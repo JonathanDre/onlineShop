@@ -9,17 +9,28 @@ const NotificationProvider = ({ children }) => {
 
   // Add a new notification
   const addNotification = (notification) => {
-    setNotifications([...notifications, notification]);
+    setNotifications([ notification, ...[notifications]]);
   };
+
+  const setAllNotifications = async (notifications) => {
+    setNotifications(notifications)
+  }
 
   // Remove a notification
-  const removeNotification = (id) => {
-    setNotifications(notifications.filter((notification) => notification.id !== id));
-  };
-
+  
   // Clear all notifications
-  const clearNotifications = () => {
+  const clearNotifications = async (token) => {
+    await fetch(`${import.meta.env.VITE_SERVER_URL}/user/clearNotifications`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${token}`
+      }
+    }).then(()=> {
     setNotifications([]);
+    }).catch(error => {
+      console.log(error)
+    })
   };
 
   return (
@@ -27,8 +38,9 @@ const NotificationProvider = ({ children }) => {
       value={{
         notifications,
         addNotification,
-        removeNotification,
+        
         clearNotifications,
+        setAllNotifications
       }}
     >
       {children}

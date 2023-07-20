@@ -51,8 +51,8 @@ const shop = async function(req, res){
             metadata : {user: userId}
             // Include any other custom information you want
           },
-          success_url: 'http://localhost:5173/client/online-administration/src/assets/good.html',
-          cancel_url: 'http://localhost:5173/client/online-administration/src/assets/cancel.html'
+          success_url: 'http://127.0.0.1:5173/login',
+          cancel_url: 'http://127.0.0.1:5173/login'
         })
         res.json({ url: session.url })
       } catch (e) {

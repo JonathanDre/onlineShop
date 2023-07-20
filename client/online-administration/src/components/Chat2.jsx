@@ -13,9 +13,11 @@ const Chat2 = () => {
     const [selectedFriend, setSelectedFriend] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [receivedImage, setReceivedImage] = useState(null);
-    const [visibleMessages, setVisibleMessages] = useState([]);
     const [messageIndex, setMessageIndex] = useState(5);
+
     const [chatOpened, setChatOpened] = useState(false)
+    const [visibleMessages, setVisibleMessages] = useState([]);
+
     
 
 

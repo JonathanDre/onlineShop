@@ -15,4 +15,7 @@ export default defineConfig({
       "simple-peer": "simple-peer/simplepeer.min.js",
     },
   },
+  optimizeDeps: {
+    exclude: ['js-big-decimal']
+  }
 })

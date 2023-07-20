@@ -29,7 +29,7 @@ app.use(
 );
 
 const corsOptions = {
-  origin: ['localhost:3000', 'http://127.0.0.1:5173'], // Add your allowed origins here
+  origin: ['http://localhost:3000', 'http://127.0.0.1:5173', 'http://localhost:5173'], // Add your allowed origins here
   methods: ['GET', 'POST'], // Add the allowed HTTP methods // Add any additional allowed headers
 };
 
@@ -86,7 +86,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (request, re
   const payload = JSON.parse(payloadString)
  
   
-  const valueObjectList = {"19999": {value:1000, name: "Diamond"}, "39999": {value:3500, name: "Ruby"}, "9999": {value:700, name: "Gold"}, "4999": {value:300, name: "Silver"} }
+  const valueObjectList = {"19999": {value:1500, name: "Diamond"}, "39999": {value:3500, name: "Ruby"}, "9999": {value:700, name: "Gold"}, "4999": {value:300, name: "Silver"} }
   const sig = request.headers['stripe-signature'];
   console.log("sig", sig)
   let event;
@@ -136,11 +136,6 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (request, re
         console.log(err)
       }
   }
-  
-  
-  
-  
-
   response.status(200).end();
 });
 configureSocketServer(server)

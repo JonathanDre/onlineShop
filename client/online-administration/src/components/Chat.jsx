@@ -4,6 +4,7 @@ import UserContext from './../UserContext';
 import VideoChat from "./VideoChat";
 import Peer from 'simple-peer'
 import SocketContext from "../SocketConetxt";
+import ChatContext from "../ChatContext";
 
 const Chat = () => {
 
@@ -17,15 +18,15 @@ const Chat = () => {
     const [visibleMessages, setVisibleMessages] = useState([]);
     const [messageIndex, setMessageIndex] = useState(5);
     const [isCallRejected, setIsCallRejected] = useState(false);
-
+    const {inCall, setInCall,isReceiveingCall, setIsReceiveingCall,isCalling, setIsCalling} = useContext(ChatContext)
     const [updateInchat, setUpdateInChat] = useState(false)
     //////////////////////////////////////////
     const [me, setMe] = useState("");
 
     const [timer, setTimer] = useState(null)
-    const [isCalling, setIsCalling] = useState(false)
+    //const [isCalling, setIsCalling] = useState(false)
     const [stream, setStream] = useState(null);
-    const [receiveingCall, setReceivingCall] = useState(false);
+   
     const [caller, setCaller] = useState("");
     const [callerSignal, setCallerSignal] = useState("");
     const [callAccepted, setCallAccepted] = useState(false);
@@ -37,7 +38,6 @@ const Chat = () => {
     const myVideo = useRef(null)
     const userVideo = useRef(null)
     const connectionRef = useRef(null)
-    const peerRef = useRef(null);
 
 
     useEffect(()=>{
@@ -60,14 +60,14 @@ const Chat = () => {
                 console.log("data", data)
                 setCallAccepted(false);
                 setIsCallRejected(false)
-                setReceivingCall(true)
+                setIsReceiveingCall(true)
                 setCaller(data.from)
                 setCallerSignal(data.signal)
             })
 
             socket.on("autodecline", ()=> {
                 setIsCallRejected(true)
-                setReceivingCall(false)
+                setIsReceiveingCall(false)
                 setCallEnded(true)
                 setCaller("")
                 setCallerSignal("")
@@ -88,7 +88,7 @@ const Chat = () => {
                 setCallEnded(true)
                 setCallAccepted(false)
                 setIsCalling(false)
-                
+                setInCall(false)
 
                 
         
@@ -106,6 +106,7 @@ const Chat = () => {
                 setCallEnded(true)
                 setCallAccepted(false)
                 setIsCalling(false)
+                
             })
         
     }
@@ -114,7 +115,7 @@ const Chat = () => {
             setCallAccepted(false)
             setCallEnded(false)
             setIsCallRejected(false)
-            setStream(null)
+            setInCall(true)
            
            
             navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream1) => {
@@ -127,7 +128,7 @@ const Chat = () => {
                     stream: stream1
                     
                 })
-                peerRef.current = peer
+             
                 console.log("peer in callUser", peer)
                 
                 peer.on("signal", (data) => {
@@ -140,7 +141,7 @@ const Chat = () => {
                 })
                 setIsCalling(true)
             })
-            
+            peer.on('close', () => { console.log('peer closed'); socket.off("callAccepted"); socket.off("callUser") });
             peer.on("stream", (stream2) => {
 
                 console.log("in the on Stream1: ", stream1)
@@ -149,7 +150,7 @@ const Chat = () => {
                     userVideo.current.srcObject = stream2  
             })
            
-            connectionRef.current = peerRef.current;
+            connectionRef.current = peer;
             
             socket.on("callAccepted", (signal) => {
                 console.log("Received signal:", signal);
@@ -160,7 +161,7 @@ const Chat = () => {
                 setInChat(true)
                 setIsCalling(false)
                 
-                peerRef.current.signal(signal);
+                peer.signal(signal);
 
             })
             
@@ -174,11 +175,12 @@ const Chat = () => {
             setIsCalling(false)
             setCallEnded(true)
             setIsCallRejected(true)
-            setReceivingCall(false)
+            setInCall(false)
             if (timer) {
                 clearTimeout(timer);
               }
               socket.emit("autodecline", (selectedFriend.userName))
+              ///
         }
 
         const declineCall = () => {
@@ -190,7 +192,7 @@ const Chat = () => {
               if (connectionRef.current) {
                 
               }
-                setReceivingCall(false)
+              setIsReceiveingCall(false)
                 setCallEnded(true)
                 setCaller("")
                 setCallerSignal("")
@@ -201,9 +203,9 @@ const Chat = () => {
         const answerCall = () => {
             setCallAccepted(true)
             setCallEnded(false)
-            setReceivingCall(false)
+            setIsReceiveingCall(false)
             setIsCallRejected(false)
-
+            setInCall(true)
 
             navigator.mediaDevices.getUserMedia({video: true, audio: true}).then((stream1) => {
                 setStream(stream1)
@@ -225,6 +227,7 @@ const Chat = () => {
                         myVideo.current.srcObject = stream1
                         userVideo.current.srcObject = stream2
                     })
+                    
                     
                     peer.signal(callerSignal)
                     
@@ -254,6 +257,7 @@ const Chat = () => {
 
       const leaveCallSooner = () => {
         setIsCalling(false)
+        setInCall(false)
         socket.emit("cancelCall", (selectedFriend.userName))
         setIsCallRejected(true)
         setCallEnded(true);
@@ -272,10 +276,17 @@ const Chat = () => {
         console.log("userVideo", userVideo)
         myVideo.current.srcObject = null; // Clear local video display
         userVideo.current.srcObject = null;
-        socket.emit("leaveCall", (selectedFriend.userName))
+        console.log("caller", caller)
+        if(caller !== "" && caller !== null){
+            socket.emit("leaveCall", (caller))
+        }else{
+            socket.emit("leaveCall", (selectedFriend.userName))
+           
+        }
         setCallEnded(true);
         setInChat(false)
         setIsCallRejected(true)
+        setInCall(false)
         //connectionRef.current.destroy();
         setCallAccepted(false); // Reset callAccepted state
         setCaller(""); // Reset caller state
@@ -283,7 +294,7 @@ const Chat = () => {
         if (connectionRef.current) {
             connectionRef.current.destroy();
           }
-          setIsCallRejected(false)
+         
           
         //window.location.reload()
   
@@ -296,6 +307,7 @@ const Chat = () => {
         userVideo.current.srcObject = null;
         // connectionRef.current.destroy();
         setCallEnded(true);
+        setInCall(false)
         setInChat(false)
         setCallAccepted(false); // Reset callAccepted state
         setIsCallRejected(true)
@@ -304,7 +316,7 @@ const Chat = () => {
         if (connectionRef.current) {
             connectionRef.current.destroy();
           }
-          setIsCallRejected(false)
+      
         //window.location.reload()
   
     }
@@ -404,6 +416,14 @@ const Chat = () => {
         socket.on('message', (message) => {
             console.log(message)
         });
+        return () => {
+            socket.off('receiveImage');
+            socket.off('chatInitiated');
+            socket.off('disconnect');
+            socket.off('privateMessage');
+            socket.off('message');
+            
+          };
         // Clean up the socket connection when the component is unmounted
         ;}
     }, [user, userList]);
@@ -414,12 +434,12 @@ const Chat = () => {
 
     useEffect(() => {
         console.log("user", user)
-        if(user.friendList){
+        if(user && socket.connected){
             console.log("socket", socket)
             setUserList(user.friendList)
         }
         console.log("userList", user.friendList)
-    }, [user])
+    }, [user, socket])
 
     /*useEffect(() => {
         if(user.friendList){
@@ -476,7 +496,7 @@ const Chat = () => {
                 ))}
             </div>
             <div className="conversation-section">
-                {selectedFriend ? (
+                {true ? (
                         <div>
                            
                                 <div className="videoChat">
@@ -486,13 +506,13 @@ const Chat = () => {
   </div>
 )}
                             <div className="video">
-                                {callAccepted && !callEnded ? <video playsInline ref={userVideo} autoPlay style = {{width: "300px"}} /> : null }
+                                {callAccepted && !callEnded && <video playsInline ref={userVideo} autoPlay style = {{width: "300px"}} />  }
                             </div>
                         </div>
                             
-                        <div>{receiveingCall && !callAccepted  && !isCallRejected? (<button onClick={answerCall}>Answer</button>) : null }</div>
-                        <div>{receiveingCall && !callAccepted  && !isCallRejected? (<button onClick={declineCall}>Decline</button>) : null }</div>
-                        <div>{ callAccepted && !callEnded ? (<button onClick={leaveCallSent}>Leave</button>) : null}</div>
+                        <div>{ isReceiveingCall && (<button onClick={declineCall}>Decline</button>)}</div>
+                        <div>{ isReceiveingCall && (<button onClick={answerCall}>Answer</button>)}</div>
+                        <div>{ inCall ? (<button onClick={leaveCallSent}>Leave</button>) : null}</div>
                         <div>{ isCalling ? (<button onClick={leaveCallSooner}>Cancel</button>) : null}</div>
                         <div>{(<button onClick={() => callUser(selectedFriend.userName)}>Call</button>)}</div>
                         <div></div>
@@ -502,7 +522,7 @@ const Chat = () => {
       <button onClick={handleLoadMoreMessages}>Load More</button>
     )}
                             {visibleMessages && visibleMessages.map((message, index) => message.image ? (<div>
-                            {message.image && <img src={message.message} alt="Received Image" />}
+                            {message.image && <img key = {message.id} src={message.message} alt="Received Image" />}
                         </div>) : (
   <div key={index}>
     <p>{message.message}</p>
@@ -520,11 +540,7 @@ const Chat = () => {
                             </form>
                         </div>
                         
-                        <div>
-                            {user.photos && user.photos.length !== 0 ? (user.photos.map((image) => (
-                                <div key= {image.url}><img src={image.url} alt="Received Image" /></div>))) : (<div>nohing</div>)
-                            }
-                        </div>
+                        
                         <input type="file" onChange={handleImageChange} />
                         <button onClick={handleSendImage}>Send Image</button>
                     </div>

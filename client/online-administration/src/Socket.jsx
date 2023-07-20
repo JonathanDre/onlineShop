@@ -1,6 +1,6 @@
 import io from "socket.io-client";
 
-const Socket = io("http://localhost:3000", {
+const Socket = io(import.meta.env.VITE_SERVER_URL, {
   auth: {
     token: localStorage.getItem("token")
   },
