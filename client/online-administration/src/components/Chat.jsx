@@ -528,12 +528,28 @@ const Chat = () => {
     <p>{message.message}</p>
   </div>
 ))}
+    {visibleMessages.map((message, index) =>
+                message.image ? (
+                    message.blured ? (
+
+                        <div key={message.id}>
+                    { 
+                      <img src={message.message} alt="Received Image" />
+                    }
+                  </div>
+                    ): (<div key={message.id}>
+                        { 
+                          <img src={message.message} alt="Received Image" />
+                        }
+                      </div>)
+                ) : (
+                  <div key={index}>
+                    <p>{message.message}</p>
+                  </div>
+                )
+              )}
                             </div>
-                            {////////////////////////////////////////////////////////}
-}
-                            
-{////////////////////////////////////////////////////////}
-}
+ 
                             <form onSubmit={handleMessageSubmit}>
                                 <input type="text" value={message} onChange={handleMessageChange} />
                                 <button type="submit">Send</button>
