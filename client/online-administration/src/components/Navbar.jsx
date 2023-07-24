@@ -12,6 +12,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import logoNav from "../assets/logoNav.png"
 import logoNav2 from "../assets/logoNav2.png"
+import Logo007 from "../assets/Logo007.png"
 const Navbar = (isLoggedIn) => {
   const { user } = useContext(UserContext)
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -49,7 +50,7 @@ const Navbar = (isLoggedIn) => {
   return (
     <div className='fixed top-0 w-full flex flex-row flex-wrap items-center justify-center h-10 text-black' style={{ background: "#000025" }}>
       <div className=' flex flex-row flex-1 ml-1 items-center h-full'>
-        {isLoggedIn && <Link className='flex items-center h-full text-white' to="/home"><img className='h-10 h-full min-w-10' src={logoNav2}/></Link>}
+        {isLoggedIn && <Link className='flex items-center h-full text-white' to="/home"><img className='h-10 h-full min-w-10' src={Logo007}/></Link>}
         {/*!isLoggedIn && <Link to="/login">Login</Link>}
         {!isLoggedIn && <Link to="/register">Register</Link>}*/}
         {isLoggedIn && <Link className='text-white ml-2' to="/gallery">Gallery</Link>}

@@ -50,6 +50,13 @@ const Authentication = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
     });
   };
 
+  useEffect(()=> {
+    formData.age > 10 && formData.age < 18 ? setFormData({
+      ...formData,
+      ["age"]: 18,
+    }): null;
+  },[formData.age])
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (terms) {
@@ -242,6 +249,7 @@ const Authentication = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
                 placeholder="Enter your age"
                 value={formData.age}
                 onChange={handleChange}
+                min={18}
               />
             </div>
           </div>

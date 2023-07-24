@@ -8,16 +8,19 @@ import SocketContext from "../SocketConetxt"
 import React, { useState, useEffect, useContext } from 'react';
 import User from './../components/User';
 import Navbar from './../components/Navbar';
-import { BrowserRouter as Router, Route, Routes, Link, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Link, Navigate, useNavigate } from "react-router-dom";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import Socket from "../Socket"
 import CloseIcon from '@mui/icons-material/Close';
 import UserContext from "../UserContext";
 import ChatContext from "../ChatContext";
+import ImageContext from "../ImageContext";
 import { NotificationContext } from "../NotificationContext";
 import io from "socket.io-client";
+
 const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
 
-
+  const navigate = useNavigate()
   const token = localStorage.getItem("token")
   const [userData, setUserData] = useState([])
   const [loading, setLoading] = useState(true);
@@ -25,11 +28,12 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
   const [error, setError] = useState("")
   const [searchUsername, setSearchUsername] = useState("");
   const { socket, setSocket } = useContext(SocketContext)
-  const { chatOpened, inCall } = useContext(ChatContext)
+  const { chatOpened,setChatOpened, inCall } = useContext(ChatContext)
   const [me, setMe] = useState(null)
   const { user } = useContext(UserContext)
   const [socketInstance, setSocketInstance] = useState(null);
   const { notifications, addNotification } = useContext(NotificationContext);
+  const { imageContext, setImageContext } = useContext(ImageContext)
   const fetchData = async () => {
     await fetch(`${import.meta.env.VITE_SERVER_URL}/user/home`, {
       method: "GET",
@@ -52,6 +56,10 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
 
       });
   }
+
+  useEffect(()=> {
+    setChatOpened(false)
+  },[])
   useEffect(() => {
     if (token && user) {
       fetchData()
@@ -125,10 +133,24 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
   const handleCancelDisplay = () => {
     setFoundUser(null);
   };
-
+  function closeImage() {
+    console.log(imageContext)
+    setImageContext(null)
+  }
+  useEffect(()=> {
+    setChatOpened(false)
+  },[])
 
   return (<>
-    {!chatOpened && !inCall && (
+  {imageContext !== null && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
+                <TransformWrapper >
+                    <TransformComponent >
+                        <img className="flex w-full h-full object-contain" src={imageContext} alt="Received Image" />
+                    </TransformComponent>
+                </TransformWrapper>
+                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={closeImage}>Close</button></div>
+            </div>}
+    {!chatOpened && !imageContext && !inCall &&  user && (
     <div className="text-white m-auto flex flex-col w-full justify-center " style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
       <div className="h-1/5 mx-auto items-center justify-center  min-w-min pt-10 flex flex-col w-1/2">
         <div className="flex w-full mt-2 items-center justify-center  ">

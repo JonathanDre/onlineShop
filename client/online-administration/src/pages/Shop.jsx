@@ -4,7 +4,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import ChatContext from "../ChatContext";
 const Shop = () => {
     const [data, setData] = useState([]);
-  const {chatOpened, inCall} = useContext(ChatContext)
+  const {chatOpened,setChatOpened, inCall} = useContext(ChatContext)
   
         useEffect( () => {
             const fetchData = async () => {
@@ -27,6 +27,10 @@ const Shop = () => {
               }
             fetchData()
         }, []);
+
+        useEffect(()=> {
+          setChatOpened(false)
+        },[])
     
         return (<>
 

@@ -15,12 +15,14 @@ import { v4 as uuidv4 } from 'uuid';
 import ImageIcon from '@mui/icons-material/Image';
 import SendIcon from '@mui/icons-material/Send';
 import replace from "../assets/replace.jpg"
+import Lock from "../assets/Lock.png"
 import MicNoneIcon from '@mui/icons-material/MicNone';
 import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import PhoneEnabledOutlinedIcon from '@mui/icons-material/PhoneEnabledOutlined';
 import Error from "../components/Error"
 import { Link } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 const Chat3 = () => {
     const [wantsToSendImage, setWantstoSendImage] = useState(false)
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -43,6 +45,9 @@ const Chat3 = () => {
     const myVideo = useRef(null)
     const userVideo = useRef(null)
     const connectionRef = useRef(null)
+
+const navigate = useNavigate()
+
     const [timer, setTimer] = useState(null)
     const { imageContext, setImageContext } = useContext(ImageContext)
     //const [isCalling, setIsCalling] = useState(false)
@@ -59,6 +64,16 @@ const Chat3 = () => {
     const [isAnotherMicEnabled, setIsAnotherMicEnabled] = useState(true);
     const [error, setError] = useState("")
 
+    console.log("MICROPHONEOUTSIDE", isAnotherMicEnabled)
+    console.log("CameraEOUTSIDE", isCameraEnabled)
+    console.log("InCallOutside", inCall)
+    console.log("callEndedOutside", callEnded)
+    console.log("isReceiveingCall", isReceiveingCall)
+    console.log("inChat", inChat)
+    console.log("callAccepted", callAccepted)
+    console.log("selectedFriend", selectedFriend)
+    console.log("caller", caller)
+    console.log("user.userName", user.userName)
 
     /////////////////video CHAT functionality
     useEffect(() => {
@@ -82,24 +97,29 @@ const Chat3 = () => {
         if (socket) {
 
             socket.on("callUser", (data) => {
-                console.log("data", data)
+                console.log("dataonCallUser", data)
+                console.log("callUserReceived", data)
 
-                if (inChat) {
-                    socket.emit("declined", (data.from))
-                } else {
 
-                    setCallAccepted(false);
-                    setIsCallRejected(false)
-                    setIsReceiveingCall(true)
-                    setCaller(data.from)
-                    setCallerSignal(data.signal)
-                }
+                setCaller(data.from)
+                setIsReceiveingCall(true)
+                setCallAccepted(false);
+                setIsCallRejected(false)
+                setCallerSignal(data.signal)
+
+            })
+
+            socket.on("error", () => {
+                console.log("errrroror")
             })
 
             socket.on("cameraOn", () => {
                 console.log("cameraOnbefore", isAnotherCameraEnabled)
                 setIsAnotherCameraEnabled(true)
                 console.log("cameraafter", isAnotherCameraEnabled)
+                console.log("myVideo.current", myVideo)
+                console.log("myVideo.current", myVideo.current)
+
             })
             socket.on("cameraOff", () => {
                 console.log("cameraOFFbefore", isAnotherCameraEnabled)
@@ -135,7 +155,6 @@ const Chat3 = () => {
                 // so we need to leave the call as well
 
                 leaveCallReceived();
-
             });
 
             socket.on("declined", () => {
@@ -150,9 +169,10 @@ const Chat3 = () => {
                 }
 
 
-
             })
-
+            socket.on('disconnect', () => {
+                console.log("socket disconnected")
+            });
             socket.on("cancelCall", () => {
                 setIsCallRejected(true)
                 setCallEnded(true)
@@ -165,11 +185,14 @@ const Chat3 = () => {
                 socket.off('declined');
                 socket.off('leaveCall');
                 socket.off('autodecline');
-                socket.off('callUser');
                 socket.off('micOn');
                 socket.off('micOff');
                 socket.off('cameraOn');
                 socket.off('cameraOff');
+                socket.off('error');
+                socket.off('disconnect');
+                socket.off('callAccepted');
+                socket.off('callUser');
 
             };
         }
@@ -180,24 +203,46 @@ const Chat3 = () => {
             setError("Not enought tokens!")
             return
         }
+        setInCall(true)
         setCallAccepted(false)
         setCallEnded(false)
         setIsCallRejected(false)
-        setInCall(true)
 
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream1) => {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(async (stream1) => {
+            const response =
+                await fetch("https://freyada.metered.live/api/v1/turn/credentials?apiKey=6f295be0ba65de2dc9c1e230bbd227c099e8");
+
+            // Saving the response in the iceServers array
+            const moreIceServers = await response.json();
+
+            const iceServers = [{
+                urls: "turn:relay1.expressturn.com:3478",
+                username: "efJ2BT0ONGMZUE50XW",
+                credential: "kxaJtzEhQCcWFAxX",
+            }, {
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }, {
+                urls:
+                    'stun:stun2.l.google.com:19302',
+            }, { urls: 'stun:stun1.l.google.com:19302' }, ...moreIceServers]
             setStream(stream1)
-            console.log("stream", stream)
+            console.log("stream useState", stream)
             console.log("stream1 in callUser", stream1)
             const peer = new Peer({
                 initiator: true,
                 trickle: false,
-                stream: stream1
+                stream: stream1,
+                config: { iceServers: iceServers }
 
             })
             console.log("peer in callUser", peer)
-
+            peer.on('error', err => {
+                console.log('error', err)
+                leaveCallSent()
+            })
             peer.on("signal", (data) => {
                 console.log("there is a signal and the user To Call is :", id)
                 socket.emit("callUser", {
@@ -210,11 +255,14 @@ const Chat3 = () => {
             })
             peer.on('close', () => { console.log('peer closed'); socket.off("callAccepted"); });
             peer.on("stream", (stream2) => {
+                if (myVideo.current && userVideo.current) {
+                    myVideo.current.srcObject = stream1
 
-                console.log("in the on Stream1: ", stream1)
-                console.log("in the on Stream2: ", stream2)
-                myVideo.current.srcObject = stream1
-                userVideo.current.srcObject = stream2
+                    console.log("in the on Stream1: ", stream1)
+                    console.log("in the on Stream2: ", stream2)
+
+                    userVideo.current.srcObject = stream2
+                }
             })
 
             connectionRef.current = peer;
@@ -222,6 +270,7 @@ const Chat3 = () => {
             socket.on("callAccepted", (signal) => {
                 console.log("Received signal:", signal);
                 console.log("Peer:", peer);
+                console.log("Another user accepted the call");
                 setIsCallRejected(false)
                 setCallEnded(false)
                 setCallAccepted(true),
@@ -230,7 +279,6 @@ const Chat3 = () => {
                 setUser({ ...user, tokens: user.tokens - 50 })
 
                 peer.signal(signal);
-
             })
 
         }).catch((error) => {
@@ -270,33 +318,65 @@ const Chat3 = () => {
 
 
     const answerCall = () => {
+        setIsReceiveingCall(false)
+        setInCall(true)
         setCallAccepted(true)
         setCallEnded(false)
-        setIsReceiveingCall(false)
         setIsCallRejected(false)
-        setInCall(true)
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream1) => {
+        console.log("callAnswered")
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(async (stream1) => {
             setStream(stream1)
+            const response =
+                await fetch("https://freyada.metered.live/api/v1/turn/credentials?apiKey=6f295be0ba65de2dc9c1e230bbd227c099e8");
 
-            console.log("stream", stream)
+            // Saving the response in the iceServers array
+            const moreIceServers = await response.json();
+
+            const iceServers = [{
+                urls: "turn:relay1.expressturn.com:3478",
+                username: "efJ2BT0ONGMZUE50XW",
+                credential: "kxaJtzEhQCcWFAxX",
+            }, {
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }, {
+                urls:
+                    'stun:stun2.l.google.com:19302',
+            }, { urls: 'stun:stun1.l.google.com:19302' }, ...moreIceServers]
+            console.log("streamThat i use now", stream)
+            console.log("stream11111111111111111That i use now", stream1)
             const peer = new Peer({
                 initiator: false,
                 trickle: false,
-                stream: stream1
+                stream: stream1,
+                config: { iceServers: iceServers },
+
 
             })
+            peer.on('error', err => {
+                console.log('error', err)
+                leaveCallSent()
 
+            })
             peer.on("signal", (data) => {
                 console.log("caller", caller)
                 socket.emit("answerCall", { signal: data, to: caller })
                 setInChat(true)
                 setInCall(true)
             })
-            peer.on('close', () => { console.log('peer closed');socket.off('callUser'); });
+            peer.on('close', () => { console.log('peer closed'); });
             peer.on("stream", (stream2) => {
-                myVideo.current.srcObject = stream1
-                userVideo.current.srcObject = stream2
+                console.log("Peer:", peer);
+                if (myVideo.current && userVideo.current) {
+
+                    myVideo.current.srcObject = stream1
+                    console.log("in the on Stream1: ", stream1)
+                    console.log("in the on Stream2: ", stream2)
+
+                    userVideo.current.srcObject = stream2
+                }
             })
 
             peer.signal(callerSignal)
@@ -329,6 +409,7 @@ const Chat3 = () => {
         setIsCalling(false)
         socket.emit("cancelCall", (selectedFriend.userName))
         console.log("selectedFriend", selectedFriend)
+        console.log("leftCallsooner")
         setIsCallRejected(true)
         setCallEnded(true);
         setInChat(false)
@@ -343,10 +424,17 @@ const Chat3 = () => {
     }
 
     const leaveCallSent = () => {
+        console.log("leftCallsooner")
         console.log("myVideo", myVideo)
         console.log("userVideo", userVideo)
-        myVideo.current.srcObject = null; // Clear local video display
-        userVideo.current.srcObject = null;
+        if (myVideo.current) {
+
+            myVideo.current.srcObject = null
+        }
+        if (userVideo.current) {
+
+            userVideo.current.srcObject = null
+        }
         if (caller !== "" && caller !== null) {
             socket.emit("leaveCall", (caller))
         } else {
@@ -421,8 +509,14 @@ const Chat3 = () => {
         console.log("myVideo", myVideo)
         console.log("userVideo", userVideo)
         console.log("leffffffft")
-        myVideo.current.srcObject = null; // Clear local video display
-        userVideo.current.srcObject = null;
+        if (myVideo.current) {
+
+            myVideo.current.srcObject = null
+        }
+        if (userVideo.current) {
+
+            userVideo.current.srcObject = null
+        }
         // connectionRef.current.destroy();
         setCallEnded(true);
         setInChat(false)
@@ -537,12 +631,14 @@ const Chat3 = () => {
     };
 
     const handleMessageSubmit = (e) => {
+       
+        e.preventDefault();
         if (user.tokens < 5) {
             setError("Not enought tokens!")
-            setMessage('');
+                // Call the navigate function to redirect to a different route
+            navigate('/shop');
             return
         }
-        e.preventDefault();
         if (selectedFriend) {
             console.log("selectedFriend", selectedFriend)
             socket.emit('privateMessage', {
@@ -606,7 +702,7 @@ const Chat3 = () => {
 
     const handleFriendClick = async (friend) => {
         if (selectedFriend && selectedFriend.email === friend.email) {
-            setSelectedFriend(null);
+            setSelectedFriend({});
             setMessages([])
             setVisibleMessages([])
             setMessageIndex(5)
@@ -666,7 +762,7 @@ const Chat3 = () => {
         console.log("userList", user.friendList)
     }, [user])
     const imageStyle = {
-        filter: 'blur(20px)',
+        filter: 'blur(7px)',
     };
 
     const toggleChat = () => {
@@ -682,6 +778,12 @@ const Chat3 = () => {
     }
 
     const handleUnblock = (message) => {
+        if(user.tokens < 50){
+            setError("Not enought tokens")
+            navigate("/shop")
+            setChatOpened(false)
+            return
+        }
         setShowConfirmation(true)
         setUnblockedImage(message)
     }
@@ -774,7 +876,13 @@ const Chat3 = () => {
 
     function openFullscreen(imageUrl) {
         console.log("chatOpened", chatOpened)
+        console.log("imageCOntext", imageContext)
+        console.log("imageUrl", imageUrl)
         setImageContext(imageUrl)
+        setTimeout(() => {
+
+            console.log("imageCOntext", imageContext)
+        }, 10000)
         // Add a click event listener to close the fullscreen view
 
     }
@@ -807,14 +915,27 @@ const Chat3 = () => {
         <>
             {inCall && (
                 <div className="w-screen h-screen flex flex-col justify-center items-center bg-black">
-                    {callAccepted && !callEnded && (
-                        <div className="video fixed bottom-10 left-1/2" style={{ transform: 'translateX(-50%)' }}>
-                            {<video playsInline muted ref={myVideo} autoPlay style={{ display: isCameraEnabled ? 'block' : 'none' }} />}
-                        </div>
-                    )}
-                    <div className="video">
-                        {callAccepted && !callEnded ? <video muted={!isAnotherMicEnabled} playsInline ref={userVideo} autoPlay style={{ display: isAnotherCameraEnabled ? 'block' : 'none' }} /> : null}
+
+                    <div className="video fixed bottom-10 left-1/2" style={{ transform: 'translateX(-50%)' }}>
+                        {callAccepted && !callEnded && (
+                            <>
+                                <video
+                                    playsInline
+                                    muted
+                                    ref={myVideo}
+                                    autoPlay
+                                    style={{ display: isCameraEnabled ? 'block' : 'none' }}
+                                />
+                            </>
+                        )}
                     </div>
+
+
+                    <div className="video h-20 w-20">
+                        {callAccepted && !callEnded ? <video muted={!isAnotherMicEnabled} playsInline ref={userVideo} autoPlay={true} style={{ display: isAnotherCameraEnabled ? 'block' : 'none' }} /> : null}
+                    </div>
+
+
                     <div className="fixed right-5 bottom-10 flex flex-col justify-center items-center" >
                         <div className="flex">{inCall && callAccepted && !isMicEnabled && (<MicNoneIcon fontSize="large" className="bg-transparent text-red-500 cursor-pointer rounded-2xl my-3" onClick={enableMic} />)}</div>
                         <div className="flex">{inCall && callAccepted && isMicEnabled && (<MicNoneIcon fontSize="large" className="bg-transparent text-white  cursor-pointer rounded-2xl my-3" onClick={disableMic} />)}</div>
@@ -827,7 +948,7 @@ const Chat3 = () => {
 
 
 
-            {isReceiveingCall && caller !== "" &&
+            {isReceiveingCall && caller !== "" && callerSignal !== "" &&
                 <div className="fixed top-20 rounded-2xl items-center text-center justify-center left-1/2 bg-black z-10" style={{ transform: 'translateX(-50%)' }}>
                     <div className="flex flex-col items-center justify-center ">
                         <p className="flex my-1">{caller} is calling</p>
@@ -838,13 +959,13 @@ const Chat3 = () => {
                     </div>
                 </div>}
             {!chatOpened && !inCall && <button className="chat-button bg-transparent text-black fixed right-5 bottom-1/4" onClick={toggleChat}><img className="w-10 h-10" src={CHAT} /></button>}
-            {imageContext && chatOpened && <div className="absolute top-0 w-full h-full">
-                <TransformWrapper>
-                    <TransformComponent>
-                        <img className="w-screen h-screen" src={imageContext} alt="Received Image" />
+            {imageContext !== null && !inChat && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
+                <TransformWrapper >
+                    <TransformComponent >
+                        <img className="flex w-full h-full object-contain" src={imageContext} alt="Received Image" />
                     </TransformComponent>
                 </TransformWrapper>
-                <div className="fixed top-5 right-5"><button className="bg-transparent border border-black text-black text-xl" onClick={closeImage}>Close</button></div>
+                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={closeImage}>Close</button></div>
             </div>}
             {chatOpened && !imageContext && !inCall && !chatOpenedAfterRedirect && (
                 <div className=" chat mt-10 text-black h-full w-full fixed bg-white top-0 border-2 border-white flex flex-row">
@@ -854,25 +975,25 @@ const Chat3 = () => {
                     }
                     {friendList && friendList.length > 0 ? (
                         <>
-                            <div className="chat-users h-full bg-slate-900 flex-end text-black w-1/4 ">
+                            <div className="chat-users h-full pb-10 bg-slate-900 flex-end text-black w-1/4 overflow-y-auto ">
                                 {friendList.map((user, index) => (messagesNotif && messagesNotif.length > 0 && messagesNotif.some(s => s === user.userName)) ? (
                                     <div onClick={() => handleSetMessageSeen(user)}
-                                        className={`relative flex flex-col friend border border-slate-900 items-center justify-center text-black p-2 ${index % 2 === 0 ? 'bg-gradient-to-b from-cyan-500 to-cyan-700' : 'bg-gradient-to-b from-blue-700 to-indigo-900'
+                                        className={`relative flex flex-col friend border border-slate-900 items-center justify-center text-black m-2 rounded-2xl ${index % 2 === 0 ? 'bg-gradient-to-b from-red-500 to-fuchsia-700' : 'bg-gradient-to-b from-cyan-500 to-indigo-700'
                                             }`}
-                                    >
+                                        style={{ backgroundColor: "9A099E" }}>
                                         <img className="h-12 rounded-full w-12 my-1" src={user.mainImage.url || replace} />
-                                        <p className="text-white">
+                                        <p className="text-white flex-wrap italic">
                                             {user.userName}
                                         </p>
                                         <div className=" absolute top-2 right-2 bg-red-500 rounded-full w-2 h-2"></div>
                                     </div>
                                 ) : (
                                     <div onClick={() => handleFriendClick(user)}
-                                        className={`relative flex flex-col friend border border-slate-900 items-center justify-center text-black p-2 ${index % 2 === 0 ? 'bg-gradient-to-b from-cyan-500 to-cyan-700' : 'bg-gradient-to-b from-blue-700 to-indigo-900'
+                                        className={`relative flex flex-col friend border border-slate-900 items-center justify-center text-black m-2 rounded-2xl  ${index % 2 === 0 ? 'bg-gradient-to-b from-red-500 to-fuchsia-700' : 'bg-gradient-to-b from-cyan-500 to-indigo-600'
                                             }`}
-                                    >
+                                        style={{ backgroundColor: "#9A099E" }}>
                                         <img className="h-12 rounded-full w-12 my-1" src={user.mainImage.url || replace} />
-                                        <p className="text-white">
+                                        <p className="text-white flex-wrap italic">
                                             {user.userName}
                                         </p>
                                     </div>
@@ -882,16 +1003,16 @@ const Chat3 = () => {
 
 
                             <div className="relative flex flex-col justify-center bg-slate-900 items-center h-full w-3/4 text-black">
-                                <div className="absolute top-0 flex myw-2 flex-col border-b border-b-white items-center justify-center w-full place-self-start">
+                                <div className="absolute top-0 flex  flex-col border-b border-b-white items-center justify-center w-full place-self-start">
                                     {selectedFriend && selectedFriend.email && (
                                         <div className="flex flex-row justify-center w-full items-center text-center">
-                                            <div className="flex flex-1 ml-2" onClick={() => setChatAfterRedir()}><Link className="" to={`/users/${selectedFriend.userName}`}>{selectedFriend.userName}</Link></div>
+                                            <div className="flex flex-1 ml-2" ><Link className="text-white italic " to={`/users/${selectedFriend.userName}`}><button className="p-0 m-0 bg-transparent text-white italic" onClick={() => setChatAfterRedir()}>{selectedFriend.userName}</button></Link></div>
                                             {selectedFriend !== null && selectedFriend.email && !inCall && (<PhoneEnabledOutlinedIcon fontSize="large" className=" mx-3 w-10 h-10 bg-transparent text-center text-green-500 items-center justify-center" onClick={() => callUser(selectedFriend.userName)} />)}
                                             {chatOpened && <div className=" mx-3 justify-center items-center text-center cursor-pointer"> <CloseIcon className="chat-button text-white" fontSize="large" onClick={toggleChat} /></div>}
                                         </div>)}
-                                    {!selectedFriend && selectedFriend !== "" && chatOpened && <div className=" mx-3 justify-center items-center text-center cursor-pointer"> <CloseIcon className="chat-button text-white" fontSize="large" onClick={toggleChat} /></div>}
+                                    {!selectedFriend.hasOwnProperty("email") && chatOpened && <div className=" mx-3 justify-center items-center text-center cursor-pointer"> <CloseIcon className="chat-button text-white" fontSize="large" onClick={toggleChat} /></div>}
                                 </div>
-                                <div className="flex flex-col items-center w-full h-4/5 max-h-fit p-2 justify-end chat-messages text-black overflow-y-auto">
+                                <div className="flex flex-col items-center w-full h-4/5  p-2 justify-end chat-messages text-black overflow-y-auto">
                                     {selectedFriend && selectedFriend.email && (
                                         <div className=" relative flex flex-col items-center w-full p-2 chat-messages text-black overflow-y-auto" id="chat-container">
                                             {messages && visibleMessages && messages.length > messageIndex && <div className="w-full flex justify-center">
@@ -901,15 +1022,15 @@ const Chat3 = () => {
                                                 message.image ? (
                                                     message.blured ? (
 
-                                                        <div className={`${message.from === "friend" ? "w-28 h-28 flex flex-col self-start text-center items-center mx-2 my-1 rounded-2xl" : "w-28 h-28 flex flex-col self-end text-center items-center mx-2 my-1 rounded-2xl"}`}>
-
+                                                        <div className={`${message.from === "friend" ? " relative w-28 h-28 flex flex-col  self-start text-center  items-center mx-2 my-1 rounded-2xl" : "relative w-28 h-28 flex flex-col self-end text-center items-center mx-2 my-1 rounded-2xl"}`}>
+                                                            <img className="absolute top-1/3 left-1/2 w-1/2 h-1/2 z-10" src={Lock} style={{ transform: 'translateX(-50%)' }} onClick={() => handleUnblock(message)} />
                                                             <p className="flex w-full text-white text-sm text-center items-center justify-center bg-transparent">{formatFireDate(message.at)}</p>
-                                                            <img className="h-full w-full" style={imageStyle} onClick={() => handleUnblock(message)} src={message.message} alt="Received Image" />
+                                                            <img className="flex h-24 w-24 rounded-2xl" style={imageStyle} src={message.message} alt="Received Image" />
                                                         </div>
                                                     ) : (<div className={`${message.from === "friend" ? "w-28 h-28 flex flex-col self-start text-center items-center mx-2 my-1 rounded-2xl" : "w-28 h-28 flex flex-col self-end text-center items-center mx-2 my-1 rounded-2xl"}`}>
 
                                                         <p className="flex w-full text-white text-sm text-center items-center justify-center bg-transparent">{formatFireDate(message.at)}</p>
-                                                        <img className="h-full w-full rounded-2xl" onClick={() => openFullscreen(message.message)} src={message.message} alt="Received Image" />
+                                                        <img className="h-24 w-24 rounded-2xl" onClick={() => openFullscreen(message.message)} src={message.message} alt="Received Image" />
 
                                                     </div>)
                                                 ) : (
@@ -935,11 +1056,11 @@ const Chat3 = () => {
 
 
                                             {showConfirmation && (
-                                                <div className="fixed top-1/3 left-1/2 flex flex-col w-2/3 items-center text-center bg-black rounded-2xl p-1" style={{ transform: 'translateX(-50%)' }}>
-                                                    <p className="text-xl text-red-500">Are you sure you want to unlock picture?</p>
+                                                <div className="fixed top-1/3 left-1/2 flex flex-col w-2/3 items-center text-center bg-gradient-to-b from-red-500 to-fuchsia-700 z-20 rounded-2xl p-1" style={{ transform: 'translateX(-50%)' }}>
+                                                    <p className=" italic text-white font-serif">Are you sure you want to unlock picture? It will cost 50 tokens.</p>
                                                     <div className="flex flex-row items-center justify-center my-2">
-                                                        <button className="mx-2 rounded-2xl bg-transprent text-green-500" onClick={handleConfirmUnblock}>Yes</button>
-                                                        <button className="mx-2 rounded-2xl bg-transprent text-red-500" onClick={handleCancelUnblock}>No</button>
+                                                        <button className="text-white cursor-pointer mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleConfirmUnblock}>Yes</button>
+                                                        <button className="text-white cursor-pointer ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleCancelUnblock}>No</button>
                                                     </div>
                                                 </div>
                                             )}
@@ -951,7 +1072,7 @@ const Chat3 = () => {
                                     {selectedFriend && selectedFriend.email &&
                                         <div className="flex flex-col items-center justify-center w-full text-center">
                                             {!wantsToSendImage && <form className="flex flex-row w-4/5 items-center justify-center" onSubmit={handleMessageSubmit}>
-                                                <input className="flex-grow border border-black rounded-2xl w-2/3 mr-2" value={message} onChange={handleMessageChange} />
+                                                <input className="flex-grow border border-black rounded-2xl w-2/3 mr-2 bg-white" value={message} onChange={handleMessageChange} />
                                                 <div className="flex flex-row flex-1 w-1/3 items-center diplsay-center">
                                                     <button className="flex cursor-pointer m-1 p-0 items-center display-center" type="submit" >
                                                         <SendIcon fontSize="small" className="cursor-pointer text-white p-0" />

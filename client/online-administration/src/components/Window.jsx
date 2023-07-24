@@ -159,13 +159,13 @@ const Window = ({ onClose, target, setOtherUser, otherUser,setError }) => {
         ))}
         </div>
         {showConfirmation && (
-          <div className='fixed bottom-1/2 flex h-1/5 flex-col items-center justify-center' >
-            <p className='text-red-500'> Are you sure you want to send?</p>
-            <div className='flex flex row items-center justify-center mt-3'>
-              <button className='text-red-500 mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100' onClick={handleConfirmSend}>Yes</button>
-              <button className='text-red-500 ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100' onClick={handleCancelSend}>No</button>
-            </div>
+          <div className="fixed top-1/3 left-1/2 flex flex-col w-2/3 items-center text-center bg-gradient-to-b from-red-500 to-fuchsia-700 z-20 rounded-2xl p-1" style={{ transform: 'translateX(-50%)' }}>
+          <p className=" italic text-white font-serif">Are you sure you want to send the gift?</p>
+          <div className="flex flex-row items-center justify-center my-2">
+              <button className="text-white cursor-pointer mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleConfirmSend}>Yes</button>
+              <button className="text-white cursor-pointer ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleCancelSend}>No</button>
           </div>
+      </div>
         )}
         {giftSent && (
           <div className='fixed bottom-1/2 flex rounded-2xl h-1/6 flex-col text-red-400 items-center justify-center bg-transparent'>

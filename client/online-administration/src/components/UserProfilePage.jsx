@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import Window from './Window';
 import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import SocketContext from '../SocketConetxt';
 import UserContext from '../UserContext';
 import ImageContext from '../ImageContext';
@@ -19,7 +20,12 @@ import FavoriteOutlinedIcon from '@mui/icons-material/FavoriteOutlined';
 import CHAT from "../assets/CHAT.png"
 import ChatContext from "../ChatContext";
 import replace from "../assets/replace.jpg"
+import sendGift from "../assets/sendGift.png"
+import chatButton from "../assets/chatButton.png"
+import noLike from "../assets/noLike.png"
+import redLike from "../assets/redLike.png"
 import Error from "../components/Error"
+import Lock from "../assets/Lock.png"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 const UserProfilePage = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -38,6 +44,8 @@ const UserProfilePage = () => {
   const [error, setError] = useState(null)
   const {imageContext, setImageContext} = useContext(ImageContext)
   const {chatOpened, inChat, inCall, setChatOpened, chatOpenedAfterRedirect, setChatOpenedAfterRedirect} = useContext(ChatContext)
+  
+  const navigate = useNavigate()
   const myMap = new Map([
     ['Cupidon', Cupidon],
     ['Kiss', Kiss],
@@ -200,7 +208,18 @@ const UserProfilePage = () => {
       });
 
   }
+
+  useEffect(()=> {
+    setChatOpened(false)
+  },[])
   const handleUnblock = (message) => {
+    if(user.tokens < 50){
+      setError("Not enought tokens")
+      navigate("/shop")
+
+      setChatOpened(false)
+      return
+  }
     setShowConfirmation(true)
     setUnblockedImage(message)
   }
@@ -282,13 +301,13 @@ if(chatOpenedAfterRedirect){
   return (
     <>
     {error & <div className='fixed top-15 left-1/2 w-20 h-20 bg-black text-red-500 z-10'  style={{ transform: 'translateX(-50%)' }}><Error error = {error}/></div>}
-    {imageContext && !inChat && <div className="absolute top-0 w-full h-full">
-                <TransformWrapper>
-                    <TransformComponent>
-                        <img className="w-screen h-screen" src={imageContext} alt="Received Image" />
+    {imageContext !== null && !inChat && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
+                <TransformWrapper >
+                    <TransformComponent >
+                        <img className="flex w-full h-full object-contain" src={imageContext} alt="Received Image" />
                     </TransformComponent>
                 </TransformWrapper>
-                <div className="fixed top-5 right-5"><button className="bg-transparent border border-black text-black text-xl" onClick={closeImage}>Close</button></div>
+                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={closeImage}>Close</button></div>
             </div>}
       {user && otherUser && !chatOpened && !imageContext && !inCall && (
         <div className="container relative text-white m-auto min-w-full flex flex-col min-h-full items-center justify-center bg-gradient-to-b from-blue-700 to-indigo-900" style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
@@ -339,9 +358,9 @@ if(chatOpenedAfterRedirect){
                 </div>
               </div>
               <div className='  flex flex-row h-1/5 m-auto w-full items-center justify-center'>
-                {!userLiked && (<div className='  flex w-1/2 justify-center'><FavoriteBorderOutlinedIcon fontSize='large' className='flex rounded-2xl text-white bg-transparent cursor-pointer' onClick={giveLike} /></div>)}
-                {userLiked && (<div className='  flex w-1/2 justify-center'><FavoriteOutlinedIcon fontSize='large' className='flex text-red-500 rounded-2xl bg-transparent cursor-pointer' onClick={unLike} /></div>)}
-                <div className='flex w-1/2 items-center justify-center'><button className='flex  text-white rounded-2xl bg-transparent' onClick={() => addUser()}><img className="w-10 h-10" src={CHAT} /></button></div>
+                {!userLiked && (<div className='  flex w-1/2 justify-center'><img src={noLike} className='flex rounded-2xl text-white bg-transparent cursor-pointer w-12 h-12' onClick={giveLike} /></div>)}
+                {userLiked && (<div className='  flex w-1/2 justify-center'><img src={redLike} className='flex text-red-500 rounded-2xl bg-transparent cursor-pointer w-12 h-12' onClick={unLike} /></div>)}
+                <div className='flex w-1/2 items-center justify-center'><button className='flex  text-white rounded-2xl bg-transparent' onClick={() => addUser()}><img className="w-12 h-12" src={chatButton} /></button></div>
               </div>
             </div>
 
@@ -352,8 +371,9 @@ if(chatOpenedAfterRedirect){
                     <img className='w-full h-full rounded-2xl' src={image.url} alt="User Image" onClick={() => openFullscreen(image.url)} />
                   </div>
                 ) : (
-                  <div className='flex flex-col mx-2 relative text-center my-3'>
-                    <img className='w-full h-full rounded-2xl' style={{ filter: 'blur(20px)' }} onClick={() => handleUnblock(image)} src={image.url} alt="Blocked Image" />
+                  <div className='relative flex flex-col mx-2 relative text-center my-3'>
+                    <img className='w-full h-full rounded-2xl' style={{ filter: 'blur(20px)' }} src={image.url} alt="Blocked Image" />
+                    <img className="absolute top-1/2 left-1/2 w-1/2 h-20" src={Lock} style={{ transform: 'translateX(-50%) translateY(-50%)'}} onClick={() => handleUnblock(image)} />
                   </div>
                 )}</div>
               )}</div>
@@ -366,20 +386,20 @@ if(chatOpenedAfterRedirect){
                 }}>
                   <h3 className='text-lg mb-3 text-red-400'>About me</h3>{otherUser.description}</p>)}
               </div>
-              <div>{!showGifts && (<button className='text-red-500 bg-transparent rounded-2xl border-solid border-2 border-indigo-100' onClick={showTheGifts}>Send Gift</button>)}</div>
+              <div>{!showGifts && (<img src={sendGift} className='text-red-500 bg-transparent rounded-2xl ' onClick={showTheGifts}/>)}</div>
               <div>{showGifts && (<Window setError = {setError} otherUser={otherUser} setOtherUser={setOtherUser} target={otherUser.userName} onClose={closeGifts} />)}</div>
             </div>
           </div>
 
-          <div className='fixed bottom-1/2 flex h-1/5 flex-row items-center justify-center'>
+          <div className='fixed bottom-1/2 flex h-1/5 flex-row items-center justify-center '>
             <div className='relative flex flex-col items-center'>{showConfirmation && (
-              <div className='fixed flex flex-col items-center justify-center '>
-                <p className='flex mb-4'>Are you sure you want to unlock picture?</p>
-                <div className='flex flex-row'>
-                  <button className='text-red-500 mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100' onClick={handleConfirmUnblock}>Yes</button>
-                  <button className='text-red-500 ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100' onClick={handleCancelUnblock}>No</button>
-                </div>
+              <div className="fixed top-1/3 left-1/2 flex flex-col w-2/3 items-center text-center bg-gradient-to-b from-red-500 to-fuchsia-700 z-20 rounded-2xl p-1" style={{ transform: 'translateX(-50%)' }}>
+              <p className=" italic text-white font-serif">Are you sure you want to unlock picture? It will cost 50 tokens.</p>
+              <div className="flex flex-row items-center justify-center my-2">
+                  <button className="text-white cursor-pointer mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleConfirmUnblock}>Yes</button>
+                  <button className="text-white cursor-pointer ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleCancelUnblock}>No</button>
               </div>
+          </div>
             )}
             </div>
           </div>

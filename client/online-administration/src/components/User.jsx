@@ -19,6 +19,10 @@ import crystal3 from "../assets/crystal3.png"
 import crystal4 from "../assets/crystal4.png"
 import rubylips from "../assets/rubylips.png"
 import rubylight from "../assets/rubylight.png"
+import chatButton from "../assets/chatButton.png"
+import noLike from "../assets/noLike.png"
+import redLike from "../assets/redLike.png"
+import profile2 from "../assets/profile2.png"
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 const User = ({ User }) => {
   const { user, setUser } = useContext(UserContext)
@@ -87,11 +91,11 @@ const User = ({ User }) => {
             <div className='flex mx-auto italic '>{User.age}y</div>
           </div>
           <div className=' flex flex-row mt-2 w-full justify-between'>
-            <button className='flex flex-col rounded-full items-center justify-center p-1 m-0 bg-indigo-900 '><Link className='text-white w-10 h-10 items-center justify-center' to={`/users/${User.userName}`}>
-              <div className="flex items-center w-full h-full justify-center ">
-                <AccountCircleOutlinedIcon fontSize="large" />
-              </div></Link></button>
-            <button className='flex  rounded-full p-1 bg-indigo-900 ' onClick={() => addUser()}><img className="w-10 h-10" src={CHAT} /></button>
+            <button className='flex rounded-full p-1 bg-transparent'><Link className='text-white w-12 h-12 items-center justify-center' to={`/users/${User.userName}`}>
+              
+                <img className='text-white w-12 h-12' src={profile2} />
+              </Link></button>
+            <button className='flex rounded-full p-1 bg-transparent ' onClick={() => addUser()}><img className="w-12 h-12" src={chatButton} /></button>
           </div>
         </div>
       </div>

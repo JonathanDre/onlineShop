@@ -33,10 +33,15 @@ import crystal3 from "../assets/crystal3.png"
 import crystal4 from "../assets/crystal4.png"
 import rubylips from "../assets/rubylips.png"
 import rubylight from "../assets/rubylight.png"
+import chatButton from "../assets/chatButton.png"
+import noLike from "../assets/noLike.png"
+import redLike from "../assets/redLike.png"
+import { useNavigate } from 'react-router-dom';
 export default function Profile() {
 
+  const navigate = useNavigate()
   const { user, setUser } = useContext(UserContext)
-  const { chatOpened, inCall } = useContext(ChatContext)
+  const { chatOpened,setChatOpened, inCall } = useContext(ChatContext)
   const { imageContext, setImageContext } = useContext(ImageContext)
   const [ image, setImage ] = useState(null)
   const token = localStorage.getItem('token');
@@ -260,22 +265,30 @@ export default function Profile() {
   function openFullscreen(imageUrl) {
     console.log("chatOpened", chatOpened)
     setImageContext(imageUrl)
+    setTimeout(()=>{
+
+      console.log("imageCOntext", imageContext)
+  },10000)
     // Add a click event listener to close the fullscreen view
 
   }
+  useEffect(()=> {
+    setChatOpened(false)
+  },[])
   function closeImage() {
+    console.log(imageContext)
     setImageContext(null)
   }
 
   return (<>
-    {imageContext && <div className="absolute top-0 w-full h-full">
-      <TransformWrapper>
-        <TransformComponent>
-          <img className="w-screen h-screen" src={imageContext} alt="Received Image" />
-        </TransformComponent>
-      </TransformWrapper>
-      <div className="fixed top-5 right-5"><button className="bg-transparent border border-black text-black text-xl" onClick={closeImage}>Close</button></div>
-    </div>}
+    {imageContext && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
+                <TransformWrapper >
+                    <TransformComponent >
+                        <img className="flex w-full h-full object-contain" src={imageContext} alt="Received Image" />
+                    </TransformComponent>
+                </TransformWrapper>
+                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={closeImage}>Close</button></div>
+            </div>}
     {
       !chatOpened && !imageContext && !inCall && user && (
         <div className="container m-auto min-w-full min-h-full text-white flex flex-col items-center justify-center" style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
@@ -370,7 +383,7 @@ export default function Profile() {
                         }}></div>
 
                       </div>
-                      <div className='flex w-12 h-12' style={{
+                      <div className='flex w-10 h-10' style={{
                         background: `url(${rubylips})`, backgroundRepeat: 'no-repeat',
                         backgroundSize: 'cover', backgroundPosition: 'center'
                       }}></div>
@@ -570,17 +583,6 @@ export default function Profile() {
                 <img className='h-full ml-3 w-10 mr-5 rounded-full' src={myMap.get(gift.gift.Name)} />
               </div>
             ))}
-          </div>
-          <div className="flex flex-col w-4/5 items-center justify-center mb-10">
-            <div className="grid  grid-cols-2 w-full gap-8 my-5">
-              {user.photos.map((image) =>
-              (
-                <div className="flex flex-col mx-2 relative  text-center">
-                  <img className="w-full rounded-2xl h-full" src={image.url} key={image.id} onClick={() => openFullscreen(image.url)} />
-                </div>
-              )
-              )}
-            </div>
           </div>
         </div>)}
   </>
