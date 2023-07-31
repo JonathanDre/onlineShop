@@ -41,9 +41,9 @@ export default function Profile() {
 
   const navigate = useNavigate()
   const { user, setUser } = useContext(UserContext)
-  const { chatOpened,setChatOpened, inCall } = useContext(ChatContext)
+  const { chatOpened, setChatOpened, inCall } = useContext(ChatContext)
   const { imageContext, setImageContext } = useContext(ImageContext)
-  const [ image, setImage ] = useState(null)
+  const [image, setImage] = useState(null)
   const token = localStorage.getItem('token');
   const [displayForm, setDisplayForm] = useState(false);
   const [imageList, setImageList] = useState([]);
@@ -249,32 +249,32 @@ export default function Profile() {
   useEffect(() => {
     if (user && user.images && user.images.length > 0) {
       setImageList(user.images);
-     
+
     }
   }, [user]);
 
-  useEffect(()=> {
-    if(user){
+  useEffect(() => {
+    if (user) {
       setNewBody(user.body)
       setNewHair(user.hairColor)
       setNewEyeColor(user.eyeColor)
       setNewDescription(user.description)
     }
-  },[user])
+  }, [user])
 
   function openFullscreen(imageUrl) {
     console.log("chatOpened", chatOpened)
     setImageContext(imageUrl)
-    setTimeout(()=>{
+    setTimeout(() => {
 
       console.log("imageCOntext", imageContext)
-  },10000)
+    }, 10000)
     // Add a click event listener to close the fullscreen view
 
   }
-  useEffect(()=> {
+  useEffect(() => {
     setChatOpened(false)
-  },[])
+  }, [])
   function closeImage() {
     console.log(imageContext)
     setImageContext(null)
@@ -282,17 +282,17 @@ export default function Profile() {
 
   return (<>
     {imageContext && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
-                <TransformWrapper >
-                    <TransformComponent >
-                        <img className="flex w-full h-full object-contain" src={imageContext} alt="Received Image" />
-                    </TransformComponent>
-                </TransformWrapper>
-                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={closeImage}>Close</button></div>
-            </div>}
+      <TransformWrapper >
+        <TransformComponent >
+          <img className="flex w-full h-full object-contain" draggable="false" src={imageContext} alt="Received Image" />
+        </TransformComponent>
+      </TransformWrapper>
+      <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={() => closeImage()}>Close</button></div>
+    </div>}
     {
       !chatOpened && !imageContext && !inCall && user && (
         <div className="container m-auto min-w-full min-h-full text-white flex flex-col items-center justify-center" style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
-          <div className="flex w-4/5 justify-center items-center min-h-screen flex-col md:flex-row">
+          <div className="flex w-4/5 justify-center items-center min-h-screen flex-col sm:w-2/3 md:flex-row md:items-center">
             <div className="flex w-full relative flex-col p-5 my-5 items-center justify-center rounded-2xl " style={{
               background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\' viewBox=\'0 0 533 366\' fill=\'none\'%3E%3Cpath d=\'M0 30C0 13.4315 13.4315 0 30 0H503C519.569 0 533 13.4315 533 30V336C533 352.569 519.569 366 503 366H30C13.4315 366 0 352.569 0 336V30Z\' fill=\'url(%23paint0_linear_353_105)\' fill-opacity=\'0.8\'/%3E%3Cdefs%3E%3ClinearGradient id=\'paint0_linear_353_105\' x1=\'167.007\' y1=\'565.656\' x2=\'141.019\' y2=\'-106.015\' gradientUnits=\'userSpaceOnUse\'%3E%3Cstop stop-color=\'%23362759\'/%3E%3Cstop offset=\'1\' stop-color=\'%235601F4\' stop-opacity=\'0\'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")',
               backgroundRepeat: 'no-repeat',
@@ -317,19 +317,18 @@ export default function Profile() {
           */
               }
 
-              <div className="flex w-4/5 flex-col  mb-5 ">
+              <div className="flex w-4/5 flex-col mb-5 ">
                 {user && (
-                  <div className=" relative flex w-3/5 mx-auto rounded-2xl"><img className = {`flex w-full mx-auto rounded-2xl ${
-                    user.subscription?.name === 'Ruby'
-                      ? 'border-x-4 border-red-400 border-b-4 border-b-red-500'
-                      : user.subscription?.name === 'Diamond'
+                  <div className="relative flex w-3/5 mx-auto rounded-2xl"><img draggable="false" className={`flex w-full mx-auto rounded-2xl ${user.subscription?.name === 'Ruby'
+                    ? 'border-x-4 border-red-400 border-b-4 border-b-red-500'
+                    : user.subscription?.name === 'Diamond'
                       ? 'border-x-4 border-blue-400 border-b-4 border-b-blue-500'
                       : user.subscription?.name === 'Silver'
-                      ? 'border-x-4 border-gray-200 border-b-4 border-b-gray-300'
-                      : user.subscription?.name === 'Gold'
-                      ? 'border-x-4 border-yellow-300 border-b-4 border-b-yellow-400'
-                      : 'border-2 border-white'
-                  }`} src={user.mainImage.url || replacement} key={user.mainImage.id} alt="/" />
+                        ? 'border-x-4 border-gray-200 border-b-4 border-b-gray-300'
+                        : user.subscription?.name === 'Gold'
+                          ? 'border-x-4 border-yellow-300 border-b-4 border-b-yellow-400'
+                          : 'border-2 border-white'
+                    }`} src={user.mainImage.url || replacement} key={user.mainImage.id} alt="/" />
                     {user.subscription?.name === 'Gold' && <div className='absolute flex flex-row items-center justify-between w-full h-16 -bottom-6 left-1/2' style={{ transform: 'translateX(-50%)' }}>
                       <div className='flex w-8 h-16' style={{
                         background: `url(${goldlight})`, backgroundRepeat: 'no-repeat',
@@ -500,12 +499,12 @@ export default function Profile() {
 
               {isEditing &&
                 <div className="flex flex-row justify-center items-center">
-                  <button className="bottom-2 m-3 rounded-2xl border-solid border-2 border-indigo-100 bg-transparent" onClick={handleSubmit}>Submit</button>
-                  <button className="bottom-2 m-3 rounded-2xl border-solid border-2 border-indigo-100 bg-transparent" onClick={handleCancelClick}>Cancel</button>
+                  <button className="bottom-2 m-3 rounded-2xl border-solid border-2 border-indigo-100 bg-transparent" onClick={() => handleSubmit()}>Submit</button>
+                  <button className="bottom-2 m-3 rounded-2xl border-solid border-2 border-indigo-100 bg-transparent" onClick={() => handleCancelClick()}>Cancel</button>
                 </div>}
 
               {!isEditing &&
-                <EditNoteOutlinedIcon fontSize="large" className="absolute top-2 right-2 opacity-25 rounded-2xl bg-transparent hover:opacity-100 cursor-pointer" onClick={handleEditClick} />
+                <EditNoteOutlinedIcon fontSize="large" className="absolute top-2 right-2 opacity-25 rounded-2xl bg-transparent hover:opacity-100 cursor-pointer" onClick={() => handleEditClick()} />
               }
             </div>
             <div>
@@ -515,13 +514,13 @@ export default function Profile() {
               </div>
               )}
             </div>
-            {!isEditing && <AddAPhotoOutlinedIcon fontSize="large" className="flex items-center justify-center rounded-2xl cursor-pointer bg-transparent" onClick={toggleForm} />}
-            <div className="flex flex-col w-full p-8 items-center justify-center">
-              <div className="grid grid-cols-2 gap-8 mt-5">
+            <div className="flex flex-col w-full p-4 items-center justify-center">
+            {!isEditing && <AddAPhotoOutlinedIcon fontSize="large" className="flex items-center justify-center rounded-2xl cursor-pointer bg-transparent" onClick={() => toggleForm()} />}
+              <div className="grid grid-cols-2 gap-8 mt-5 md:order-first md:grid md:grid-cols-2">
                 {imageList.map((image) =>
                 (
                   <div className="flex flex-col mx-2 relative  text-center">
-                    <img className="w-full rounded-2xl h-full" src={image.url} key={image.id} />
+                    <img draggable="false" className="w-40 h-52 rounded-2xl" src={image.url} key={image.id} />
                     <ImageDeleteButton user={user} id={image.id} onDelete={() => handleImageDelete(image.id)} />
                     <EditIcon fontSize="medium" className="absolute left-2 bottom-3 opacity-50 hover:opacity-100 w-1/3 h-1/4 text-center p-0 " onClick={() => handleSelectImage(image)} />
                   </div>
@@ -530,22 +529,22 @@ export default function Profile() {
               </div>
               {selectedImage && selectedImage !== null && confirming &&
                 <div className="flex flex-col py-2 w-3/5 bg-indigo-900 rounded-2xl items-center justify-center fixed top-1/2 ">
-                  <p className="py-2 w-full text-center text-red-600">Set this image as main?</p>
+                  <p className="py-2 w-full text-center text-red-600 z-20">Set this image as main?</p>
                   <div className="flex flex-row mb-2 w-full items justify-center text-red-600">
-                    <button className="mx-auto text-center items-center justify-center" onClick={handleConfirmSelection}>Yes</button>
-                    <button className="mx-auto text-center items-center justify-center" onClick={handleCancelConfirm}>No</button>
+                    <button className="mx-auto text-center items-center justify-center" onClick={() => handleConfirmSelection()}>Yes</button>
+                    <button className="mx-auto text-center items-center justify-center" onClick={() => handleCancelConfirm()}>No</button>
                   </div>
                 </div>
               }
 
-              <div className="relative flex w-full flex-wrap text-black mt-5 text-white items-center justify-center pt-2 md:w-1/2 md:p-4">
-                {!isEditing && <p className=" min-h-content w-full break-words text-center justify-center p-4 text-lg xl:text-xl 2xl:text-2xl 2xl:p-7 2xl:text-3xl" style={{
+              <div className="relative flex w-full flex-wrap text-black mt-5 text-white items-center justify-center pt-2 md:p-4">
+                {!isEditing && <p className=" min-h-content w-full break-words text-center justify-center p-4 text-md xl:text-xl 2xl:text-xl 2xl:p-7" style={{
                   background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\' viewBox=\'0 0 533 366\' fill=\'none\'%3E%3Cpath d=\'M0 30C0 13.4315 13.4315 0 30 0H503C519.569 0 533 13.4315 533 30V336C533 352.569 519.569 366 503 366H30C13.4315 366 0 352.569 0 336V30Z\' fill=\'url(%23paint0_linear_353_105)\' fill-opacity=\'0.8\'/%3E%3Cdefs%3E%3ClinearGradient id=\'paint0_linear_353_105\' x1=\'167.007\' y1=\'565.656\' x2=\'141.019\' y2=\'-106.015\' gradientUnits=\'userSpaceOnUse\'%3E%3Cstop stop-color=\'%23362759\'/%3E%3Cstop offset=\'1\' stop-color=\'%235601F4\' stop-opacity=\'0\'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")',
                   backgroundRepeat: 'no-repeat',
                   backgroundSize: 'cover',
-                }}>{user.description}</p>}
+                }}>{user.description === "" ? "No description yet" : user.description}</p>}
                 {!isEditing &&
-                  <EditNoteOutlinedIcon fontSize="large" className="absolute top-1 right-2 opacity-25 rounded-2xl bg-transparent hover:opacity-100 cursor-pointer" onClick={handleEditClick} />
+                  <EditNoteOutlinedIcon fontSize="large" className="absolute top-1 right-2 opacity-25 rounded-2xl bg-transparent hover:opacity-100 cursor-pointer" onClick={() => handleEditClick()} />
                 }
               </div>
               <div className="flex w-full flex-wrap text-black mt-5 text-white items-center justify-center pt-2 md:w-1/2 md:p-4">
@@ -559,16 +558,16 @@ export default function Profile() {
                   }}
                     rows={5}
                     type="text"
-                    value={newDescription }
+                    value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                   />
                 }
-                {isEditing && <button className="bottom-2 m-3 rounded-2xl border-solid border-2 border-indigo-100 bg-transparent" onClick={handleSubmit}>Submit</button>}
+                {isEditing && <button className="bottom-2 m-3 rounded-2xl border-solid border-2 border-indigo-100 bg-transparent" onClick={() => handleSubmit()}>Submit</button>}
               </div>
             </div>
 
           </div>
-          <div className='flex flex-col w-4/5 m-5 h-full mx-auto items-center justify-center' style={{
+          <div className='flex flex-col w-4/5 m-5 h-full mx-auto items-center justify-center sm:w-2/3' style={{
             background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\' viewBox=\'0 0 533 366\' fill=\'none\'%3E%3Cpath d=\'M0 30C0 13.4315 13.4315 0 30 0H503C519.569 0 533 13.4315 533 30V336C533 352.569 519.569 366 503 366H30C13.4315 366 0 352.569 0 336V30Z\' fill=\'url(%23paint0_linear_353_105)\' fill-opacity=\'0.8\'/%3E%3Cdefs%3E%3ClinearGradient id=\'paint0_linear_353_105\' x1=\'167.007\' y1=\'565.656\' x2=\'141.019\' y2=\'-106.015\' gradientUnits=\'userSpaceOnUse\'%3E%3Cstop stop-color=\'%23362759\'/%3E%3Cstop offset=\'1\' stop-color=\'%235601F4\' stop-opacity=\'0\'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
@@ -578,9 +577,9 @@ export default function Profile() {
             }
             {user && user.gifts.map(gift => (
               <div className=' flex flex-row m-2 h-10 w-full items-center justify-center'>
-                <img className=' h-full w-10 mr-5 rounded-full' src={gift.from.image.url} />
+                <img className=' h-full w-10 mr-5 rounded-full ' draggable="false" src={gift.from.image.url} />
                 <div className='mx-4'><Link className='text-white' to={`/users/${gift.from.username}`}>{gift.from.username}</Link></div>
-                <img className='h-full ml-3 w-10 mr-5 rounded-full' src={myMap.get(gift.gift.Name)} />
+                <img className='h-full ml-3 w-10 mr-5 rounded-full' draggable="false" src={myMap.get(gift.gift.Name)} />
               </div>
             ))}
           </div>

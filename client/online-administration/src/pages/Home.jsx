@@ -17,6 +17,7 @@ import ChatContext from "../ChatContext";
 import ImageContext from "../ImageContext";
 import { NotificationContext } from "../NotificationContext";
 import io from "socket.io-client";
+import onlineContext from "../onlineContext";
 
 const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
 
@@ -34,6 +35,7 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
   const [socketInstance, setSocketInstance] = useState(null);
   const { notifications, addNotification } = useContext(NotificationContext);
   const { imageContext, setImageContext } = useContext(ImageContext)
+  const { online, setOnline } = useContext(onlineContext)
   const fetchData = async () => {
     await fetch(`${import.meta.env.VITE_SERVER_URL}/user/home`, {
       method: "GET",
@@ -56,6 +58,8 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
 
       });
   }
+
+  console.log("online", online)
 
   useEffect(()=> {
     setChatOpened(false)
@@ -141,18 +145,18 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
     setChatOpened(false)
   },[])
 
-  return (<>
+  return (<div className="h-screen w-full">
   {imageContext !== null && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
                 <TransformWrapper >
                     <TransformComponent >
                         <img className="flex w-full h-full object-contain" src={imageContext} alt="Received Image" />
                     </TransformComponent>
                 </TransformWrapper>
-                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={closeImage}>Close</button></div>
+                <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={() => closeImage()}>Close</button></div>
             </div>}
     {!chatOpened && !imageContext && !inCall &&  user && (
     <div className="text-white m-auto flex flex-col w-full justify-center " style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
-      <div className="h-1/5 mx-auto items-center justify-center  min-w-min pt-10 flex flex-col w-1/2">
+      <div className="h-1/5 mx-auto items-center justify-center  min-w-min pt-10 flex flex-col w-1/2 md:w-1/3 xl:w-1/4">
         <div className="flex w-full mt-2 items-center justify-center  ">
           <input
           placeholder="Search..."
@@ -161,7 +165,7 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
             value={searchUsername}
             onChange={(e) => setSearchUsername(e.target.value)}
           />
-          <SearchIcon className="w-1/5 p-0 max-auto rounded-2xl bg-transparent cursor-pointer" onClick={handleFindUser}/>
+          <SearchIcon className="w-1/5 p-0 max-auto rounded-2xl bg-transparent cursor-pointer" onClick={() => handleFindUser()}/>
         </div>
         {foundUser && (
           <div className="relative flex flex-row w-full h-full mx-auto my-3 items-center p-4 justify-center" style={{
@@ -172,19 +176,18 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
             <Link className="text-white mx-3" to = {`/users/${foundUser.userName}`}>{foundUser.userName}</Link>
             <img className="w-10 h-10 mx-3 rounded-full" src={foundUser.mainImage.url} />
             {/* Display other user properties as needed */}
-            <CloseIcon fontSize="medium" className="absolute top-0 right-0" onClick={handleCancelDisplay}/>
+            <CloseIcon fontSize="medium" className="absolute top-0 right-0" onClick={() => handleCancelDisplay()}/>
             
           </div>
         )}
       </div>
-      <div className="mx-auto pt-10 grid w-1/2 min-h-min grid-cols-1 gap-8 mb-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="mx-auto pt-10 grid w-1/2 min-h-min grid-cols-1 gap-8 mb-10 sm:w-2/3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {userData && userData.map(user => (
           <User User={user} />
-
         ))}
       </div>
 
-    </div>)}</>
+    </div>)}</div>
   );
 }
 export default Home;

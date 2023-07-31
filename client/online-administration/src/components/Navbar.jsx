@@ -13,6 +13,7 @@ import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined
 import logoNav from "../assets/logoNav.png"
 import logoNav2 from "../assets/logoNav2.png"
 import Logo007 from "../assets/Logo007.png"
+import replace from "../assets/replace.jpg"
 const Navbar = (isLoggedIn) => {
   const { user } = useContext(UserContext)
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -55,15 +56,15 @@ const Navbar = (isLoggedIn) => {
         {!isLoggedIn && <Link to="/register">Register</Link>}*/}
         {isLoggedIn && <Link className='text-white ml-2' to="/gallery">Gallery</Link>}
       </div>
-      <div className='h-full flex-1 flex flex-col items-center justify-center' onClick={handleDivClick}>
+      <div className='h-full flex-1 flex flex-col items-center justify-center' onClick={() => handleDivClick()}>
         {user && (<div className='flex flex-row h-full items-center'>
           <p className='flex ml-px mr-px items-center italic justify-center text-white'>{user.tokens}</p>
           <img className='flex my-1 items-center justify-center' src={MONEY} />
         </div>)}
       </div>
       <div className='flex flex-1 flex-row items-center h-full justify-center'>
-        {notifications.length === 0 && <button className='bg-transparent p-0 hover:none' onClick={handleNotifications} ><NotificationsNoneIcon className='text-white' /></button>}
-        {notifications.length !== 0 && <button className='bg-transparent p-0' onClick={handleNotifications} ><NotificationsIcon fontSize='medium' className='text-red-500' /></button>}
+        {notifications.length === 0 && <button className='bg-transparent p-0 hover:none' onClick={() => handleNotifications()} ><NotificationsNoneIcon className='text-white' /></button>}
+        {notifications.length !== 0 && <button className='bg-transparent p-0' onClick={() => handleNotifications()} ><NotificationsIcon fontSize='medium' className='text-red-500' /></button>}
         {showNotifications && <div className="absolute top-full w-1/2 right-5 bg-indigo-900 rounded-2xl flex flex-col text-white items-center justify-center text-center">
           {notifications.length !== 0 && notifications.map((notification) => (
             <div className="flex flex-row">
@@ -71,10 +72,10 @@ const Navbar = (isLoggedIn) => {
               <p className='my-1'>{notification.message}</p>
             </div>
           ))}
-          {notifications.length !== 0 && <DeleteOutlineOutlinedIcon className='flex h-4/5 items-center opacity-50 ' onClick={clearAllNotifications} />}
+          {notifications.length !== 0 && <DeleteOutlineOutlinedIcon className='flex h-4/5 items-center opacity-50 ' onClick={() => clearAllNotifications()} />}
         </div>}
-        {isLoggedIn && <Link className='flex h-4/5 w-8 mx-2 border border-indigo-900 items-center justify-center rounded-full' to="/profile"><img className='w-full h-full rounded-2xl' src={user.mainImage.url} /></Link>}
-        <LogoutIcon fontSize='medium' className='flex mx-px h-full items-center justify-center text-center bg-transparent text-white hover:text-blue-200 hover:rounded-full' onClick={handleLogoutClick} />
+        {isLoggedIn && <Link className='flex h-4/5 w-8 mx-2 border border-indigo-900 items-center justify-center rounded-full' to="/profile"><img className='w-full h-full rounded-2xl' src={user.mainImage.url || replace} /></Link>}
+        <LogoutIcon fontSize='medium' className='flex mx-px h-full items-center justify-center text-center bg-transparent text-white hover:text-blue-200 hover:rounded-full' onClick={() => handleLogoutClick()} />
       </div>
 
       {showConfirmation && (
@@ -82,7 +83,7 @@ const Navbar = (isLoggedIn) => {
           <p className='flex my-1'>Are you sure you want to log out?</p>
           <div className='flex flex-row justify-around w-full'>
             <LogoutButton/>
-            <button className='flex bg-transparent border border-white text-center rounded-2xl' onClick={handleCancelLogout}>No</button>
+            <button className='flex bg-transparent border border-white text-center rounded-2xl' onClick={() => handleCancelLogout()}>No</button>
           </div>
         </div>
       )}

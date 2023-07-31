@@ -71,7 +71,7 @@ const PhotoUploadForm = ({ user, setImage}) => {
     return (
         <>
             <input className='border-2 bg-transparent text-white' type="file" onChange={handleFileChange} />
-            <button className='border-2 bg-transparent border-white mt-3' onClick={handleUpload}>Upload</button>
+            <button className='border-2 bg-transparent border-white mt-3' onClick={() => handleUpload()}>Upload</button>
         </>
     );
 };

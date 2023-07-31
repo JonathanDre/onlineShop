@@ -39,7 +39,7 @@ const LogoutButton = () => {
     })
     };
     
-    return <button className='flex bg-transparent border border-white text-center rounded-2xl' onClick={logout}>Yes</button>;
+    return <button className='flex bg-transparent border border-white text-center rounded-2xl' onClick={() => logout()}>Yes</button>;
 };
 
 export default LogoutButton;

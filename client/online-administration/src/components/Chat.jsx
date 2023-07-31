@@ -48,7 +48,7 @@ const Chat = () => {
           if (selectedFriend && isCalling) {
             const newTimer = setTimeout(() => {
               declineAuto();
-            }, 30000); // Set timer for 30 seconds
+            }, 3000); // Set timer for 30 seconds
             setTimer(newTimer);
           }
     },[isCalling, selectedFriend])

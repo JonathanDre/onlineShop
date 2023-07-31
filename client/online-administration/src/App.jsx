@@ -2,7 +2,7 @@ import React from 'react';
 import io from "socket.io-client";
 import "./App.css";
 import axios from 'axios';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate  } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate, BrowserRouter  } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Shop from "./pages/Shop"
@@ -14,6 +14,7 @@ import UserContext from './UserContext';
 import SocketContext from './SocketConetxt';
 import ImageContext from './ImageContext';
 import TokenContext from './TokenContext';
+import onlineContext from './onlineContext';
 import ChatContext from './ChatContext';
 import MessageNotifContext from './MessageNotifContext';
 import Socket from "./Socket"
@@ -34,12 +35,13 @@ const App = () => {
   const [messagesNotif, setMessagesNotif] = useState([])
   const [chatOpened, setChatOpened] = useState(false)
   const [chatOpenedAfterRedirect, setChatOpenedAfterRedirect] = useState(false)
-
+  const navigate = useNavigate()
   const [chatWith, setChatWith] = useState(null)
   const [inCall, setInCall] = useState(false)
   const [isReceiveingCall, setIsReceiveingCall] = useState(false)
   const [isCalling, setIsCalling] = useState(false)
   const [imageContext, setImageContext] = useState(null)
+  const [online, setOnline] = useState([])
 
   const fetchUserData = async () => {
     try {
@@ -57,7 +59,7 @@ const App = () => {
     }
   };
   
-
+  
   useEffect(() => {
     if(isLoggedIn && token){
       console.log("socket",socket)
@@ -70,19 +72,36 @@ const App = () => {
     
     // Clean up the socket connection on component unmount
   }, [isLoggedIn, token, setUser]);
-
+  
+  useEffect(()=>{
+    if(socket){
+      socket.on("onlineList", keys => {
+        setOnline(keys)
+      })
+      socket.on("messageReceived", data => {
+        setMessagesNotif([...messagesNotif, data])
+      })
+      return () => {
+        socket.off('onlineList');
+        socket.off('messageReceived');
+      }
+    }
+  }, [socket])
+  
 
   useEffect(()=> {
     if(user){
       setMessagesNotif(user.messageNotifications)
     }
   }, [user])
+
   const clearLocalStorage = () => {
     localStorage.clear();
     setIsLoggedIn(false);
     setIsAuthenticated(false);
     setUser(null);
   };
+
   const getTokenExpiration = (token) => {
     // Extract the expiration time from the token and convert it to milliseconds
     const { exp } = JSON.parse(atob(token.split('.')[1]));
@@ -99,6 +118,7 @@ const App = () => {
       if (tokenExpiration < Date.now()) {
         // Token has expired, clear local storage
         clearLocalStorage();
+        navigate("/login")
         return;
       }
       fetchUserData();
@@ -111,13 +131,14 @@ const App = () => {
       // Fetch the user data from the backend using the stored token
       
       const newSocket = createSocketConnection(token)
+      setSocket(newSocket)
       console.log("socket.set veforeeeeeeee")
       console.log("user", user)
 
       console.log("socket.set")
 
     }
-  }, [setIsLoggedIn, setIsAuthenticated]);
+  }, []);
 /*useEffect(()=> {
   if(!tokenSet){
     const lstoken = localStorage.getItem("token")
@@ -140,7 +161,7 @@ const createSocketConnection = (token) => {
 };
   return (
     
-    <Router >
+    <div>
       <UserContext.Provider value = {{user, setUser, isLoggedIn, setIsLoggedIn, isAuthenticated, setIsAuthenticated}}>
       <SocketContext.Provider value = {{socket, setSocket}}>
       <NotificationProvider>
@@ -148,6 +169,7 @@ const createSocketConnection = (token) => {
       <MessageNotifContext.Provider value = {{messagesNotif, setMessagesNotif}}>
       <ChatContext.Provider value = {{chatOpened, setChatOpened,chatOpenedAfterRedirect,setChatOpenedAfterRedirect, chatWith, setChatWith,inCall, setInCall,isReceiveingCall, setIsReceiveingCall,isCalling, setIsCalling}}>
       <ImageContext.Provider value = {{imageContext, setImageContext}}>
+      <onlineContext.Provider value = {{online, setOnline}}>
       {/* Your app components */}
       
       <Routes>
@@ -168,6 +190,7 @@ const createSocketConnection = (token) => {
       </Routes>
       {isLoggedIn && socket && user && !imageContext  && <Chat3/>}
       {isLoggedIn && user && !imageContext && !inCall && <Navbar isLoggedIn = {isLoggedIn}/>}
+          </onlineContext.Provider>
           </ImageContext.Provider>
           </ChatContext.Provider>
           </MessageNotifContext.Provider>
@@ -175,7 +198,7 @@ const createSocketConnection = (token) => {
           </NotificationProvider>
       </SocketContext.Provider>
       </UserContext.Provider>
-    </Router>
+      </div>
   );
 };
 

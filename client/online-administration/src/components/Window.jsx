@@ -141,13 +141,13 @@ const Window = ({ onClose, target, setOtherUser, otherUser,setError }) => {
   }, [])
 
   return (
-    <div className="flex flex-col items-center justify-center" style={{
+    <div className="flex flex-col items-center my-5 justify-center w-full xl:w-1/2" style={{
       background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\' viewBox=\'0 0 533 366\' fill=\'none\'%3E%3Cpath d=\'M0 30C0 13.4315 13.4315 0 30 0H503C519.569 0 533 13.4315 533 30V336C533 352.569 519.569 366 503 366H30C13.4315 366 0 352.569 0 336V30Z\' fill=\'url(%23paint0_linear_353_105)\' fill-opacity=\'0.8\'/%3E%3Cdefs%3E%3ClinearGradient id=\'paint0_linear_353_105\' x1=\'167.007\' y1=\'565.656\' x2=\'141.019\' y2=\'-106.015\' gradientUnits=\'userSpaceOnUse\'%3E%3Cstop stop-color=\'%23362759\'/%3E%3Cstop offset=\'1\' stop-color=\'%235601F4\' stop-opacity=\'0\'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")',
       backgroundRepeat: 'no-repeat',
       backgroundSize: 'cover',
     }}>
       <div className="flex items-center justify-center flex-col">
-        <h2 className='flex text-white justify-center'>Choose a gift</h2>
+        <h2 className='flex text-red-500 text-md justify-center my-3 xl:text-xl '>Choose a gift</h2>
         <div className='grid grid-cols-2'>{gifts.map((gift) => (
           <div className='flex flex-col items-center justify-center m-2 cursor-pointer' key={gift.Name} onClick={() => handleSendClick(gift)}>
             <img className='mb-2' src={myMap.get(gift.Name)} />
@@ -162,8 +162,8 @@ const Window = ({ onClose, target, setOtherUser, otherUser,setError }) => {
           <div className="fixed top-1/3 left-1/2 flex flex-col w-2/3 items-center text-center bg-gradient-to-b from-red-500 to-fuchsia-700 z-20 rounded-2xl p-1" style={{ transform: 'translateX(-50%)' }}>
           <p className=" italic text-white font-serif">Are you sure you want to send the gift?</p>
           <div className="flex flex-row items-center justify-center my-2">
-              <button className="text-white cursor-pointer mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleConfirmSend}>Yes</button>
-              <button className="text-white cursor-pointer ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={handleCancelSend}>No</button>
+              <button className="text-white cursor-pointer mr-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={() => handleConfirmSend()}>Yes</button>
+              <button className="text-white cursor-pointer ml-2 bg-transparent rounded-2xl border-solid border-2 border-indigo-100" onClick={() => handleCancelSend()}>No</button>
           </div>
       </div>
         )}

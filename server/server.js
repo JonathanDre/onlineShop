@@ -81,7 +81,7 @@ const endpointSecret = process.env.WEBHOOK_SECRET
 });*/
 app.post('/webhook', express.raw({type: 'application/json'}), async (request, response) => {
   //const payload = Buffer.from(JSON.stringify(request.body), 'utf-8');
-  const rawPayload = request.body
+  const rawPayload = request.getRawBody()
   const payloadString = rawPayload.toString('utf-8')
   const payload = JSON.parse(payloadString)
  

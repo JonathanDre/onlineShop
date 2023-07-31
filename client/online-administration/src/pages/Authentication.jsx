@@ -127,8 +127,8 @@ const Authentication = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
           }}>
           <p className='text-white text-xl italic'>Are you 18 years old or older?</p>
           <div className='flex flex-row items-center justify-around my-2'>
-          <button className='bg-transparent text-white border border-blue-200 rounded-2xl' onClick={handleYesClick}>Yes</button>
-          <button className='bg-transparent text-white border border-blue-200 rounded-2xl' onClick={handleNoClick}>No</button>
+          <button className='bg-transparent text-white border border-blue-200 rounded-2xl' onClick={() => handleYesClick()}>Yes</button>
+          <button className='bg-transparent text-white border border-blue-200 rounded-2xl' onClick={() => handleNoClick()}>No</button>
           </div>
           </div>
         </div>
@@ -136,7 +136,7 @@ const Authentication = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
         <div>
     <div className="container relative px-4 flex flex-col items-center justify-center min-h-screen max-w-max m-auto ">
       <form className="flex flex-col mx-auto mt-10 items-center justify-center bg-gradient-to-br from-purple-600 to-transparent rounded-2xl px-8 pb-8 max-h-max w-full" onSubmit={handleSubmit}>
-        <div className='container flex absolute flex-col top-0 right-24 bg-transparent min-w-min max-w-max min-h-min max-h-max'><img className='w-25 h-20' src={Logo} /></div>
+        <div className='container flex absolute flex-col top-0 right-1/2 bg-transparent min-w-min max-w-max min-h-min max-h-max' style={{ transform: 'translateX(-50%)' }}><img className='w-25 h-20' src={Logo} /></div>
         <div className='text-white text-center font-bold text-xl mt-7 mb-3'>Get started</div>
         <div className='text-white text-center mb-3'>Register to get started finding your partner!</div>
         <div className='lg:max-w-lg  xl:flex xl:flex-wrap xl: w-4/5'>

@@ -9,6 +9,6 @@ export default {
       'girl': "url('/assets/girl1.png')",
     }},
   },
-  plugins: [require('tailwind-scrollbar'),],
+  plugins: [require('tailwind-scrollbar')],
 }
 

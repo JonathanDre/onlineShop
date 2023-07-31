@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import User from '../components/User'
 import Socket from "../Socket"
 import io from "socket.io-client";
@@ -34,7 +34,7 @@ function Login({ setIsLoggedIn, setUser, setIsAuthenticated, setToken, setSocket
   const [map, setMap] = useState(null)
   const [showLogin, setShowLogin] = useState(false);
 
-
+  const navigate = useNavigate()
 
   const myMap = new Map([
     ["1", GIRL1],
@@ -108,51 +108,6 @@ function Login({ setIsLoggedIn, setUser, setIsAuthenticated, setToken, setSocket
   };
 
 
-
-  const clearLocalStorage = () => {
-    localStorage.clear();
-    setIsLoggedIn(false);
-    setIsAuthenticated(false);
-    setUser(null);
-  };
-
-  const getTokenExpiration = (token) => {
-    // Extract the expiration time from the token and convert it to milliseconds
-    const { exp } = JSON.parse(atob(token.split('.')[1]));
-    return exp * 1000;
-  };
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    console.log("isLoggedIn", isLoggedIn)
-    const token = localStorage.getItem('token');
-    console.log("token", token)
-    if (isLoggedIn && token) {
-
-      const tokenExpiration = getTokenExpiration(token);
-      if (tokenExpiration < Date.now()) {
-        // Token has expired, clear local storage
-        clearLocalStorage();
-        return;
-      }
-      fetchUserData();
-      setIsLoggedIn(true);
-      setIsAuthenticated(true);
-      setToken(token)
-      // Set the user data from localStorage or fetch it from the backend
-      const userData = localStorage.getItem('user');
-
-      // Fetch the user data from the backend using the stored token
-      
-      const newSocket = createSocketConnection(token)
-      console.log("socket.set veforeeeeeeee")
-      console.log("user", user)
-
-      console.log("socket.set")
-
-    }
-  }, [setIsLoggedIn, setIsAuthenticated, setUser, user]);
-
-
   const createSocketConnection = (token) => {
     const socket = io(import.meta.env.VITE_SERVER_URL, {
       auth: {
@@ -224,9 +179,9 @@ function Login({ setIsLoggedIn, setUser, setIsAuthenticated, setToken, setSocket
               <button className='block w-5/6 mx-auto mb-5 border-solid border-2 border-indigo-600' type="submit">Log in</button>
             </form>
           </div>
-          <div className='container flex flex-col absolute z-10 bottom-10 items-center text-center left-1/2 min-w-min max-w-max min-h-min max-h-max justify-center lg:bottom-1/4' style={{ transform: 'translateX(-50%)' }}>
+          <div className='container flex flex-col absolute z-10 bottom-10 items-center text-center left-1/2 min-w-min max-w-max min-h-min max-h-max justify-center lg:bottom-1/4 xl:left-2/3 ' style={{ transform: 'translateX(-50%)' }}>
             <p className='flex text-purple-100 italic text-2xl lg:text-7xl xl:text-8xl 2xl:text-9xl'>FIND YOUR LIPS</p>
-            <p className='flex  py-1 text-purple-100 italic z-20 text-xl lg:text-3xl xl:text-5xl 2xl:text-6xl'>One step destination for finding your love</p>
+            <p className='flex  py-1 text-purple-100 italic z-20 text-xl lg:text-3xl xl:text-4xl 2xl:text-5xl'>One step destination for finding your love</p>
           </div>
         </div>
         <div className='loginUsers flex flex-col w-full p-8 items-center justify-center 2xl:p-32 '>

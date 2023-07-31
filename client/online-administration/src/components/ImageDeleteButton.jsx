@@ -17,7 +17,7 @@ const ImageDeleteButton = ({ user, id , onDelete}) => {
   };
 
   return (
-    <DeleteOutlineOutlinedIcon fontSize='large' className="absolute w-1/3 right-2 bottom-2 opacity-50 hover:opacity-100 cursor-pointer h-1/4 p-0" onClick={handleDelete}/>
+    <DeleteOutlineOutlinedIcon fontSize='large' className="absolute w-1/3 right-2 bottom-2 opacity-50 hover:opacity-100 cursor-pointer h-1/4 p-0" onClick={() => handleDelete()}/>
   );
 };
 

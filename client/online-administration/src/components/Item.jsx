@@ -56,7 +56,7 @@ const ItemComponent = ({ item }) => {
         <p className='flex my-2 text-2md mx-1 rounded-full w-1/2 italic' style={{ color: myNewMap.get(item.data.name) }}>{item.data.value}</p>
         <img className='flex mx-1' src = {MONEY} />
       </div>
-      <button className='text-red-500 bg-transparent rounded-2xl border-solid border-2 border-indigo-100 cursor-pointer' onClick={() => handleClick(item)} style={{ color: myNewMap.get(item.data.name) }}>{item.data.price/100}$</button>
+      <button className='text-red-500 bg-transparent rounded-2xl border-solid border-2 border-indigo-100 cursor-pointer' onClick={() => handleClick(item)} style={{ color: myNewMap.get(item.data.name) }}>{item.data.price/100}€</button>
     </div>
   );
 }
