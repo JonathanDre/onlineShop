@@ -81,11 +81,13 @@ const configureSocketServer = (server) => {
       // Find the corresponding socket connection for the friend's user ID
       const friendSocket = getFriendSocket(friendId.userName);
       if (friendSocket) {
-        
+        console.log("chat initiated in backednd" )
         // Emit custom event to the friend's socket connection
         friendSocket.emit('chatInitiated', { message: 'Chat initiated!' });
+      }else {
+
+        console.log("friendSocket does not exist")
       }
-      console.log("friendSocket does not exist")
     });
 
 
@@ -252,7 +254,26 @@ const configureSocketServer = (server) => {
       const date = new Date(timestamp)
       const firebaseDate = date.toISOString()
       // Find the friend's socket and emit the private message
-      const friendSock = getFriendSocket(friend.userName);
+      const friendSocket = getFriendSocket(friend.userName)
+      if (friendSocket) {
+        console.log("friend socket exists when sending messages")
+        friendSocket.emit('privateMessage', {message:{message, from: "friend", at: firebaseDate}, userName: socket.user});
+      }else{
+        try {
+        const userRef = db.collection('users');
+        const snapshot = await userRef.where('userName', '==', friend.userName).limit(1).get();
+        if (snapshot.empty) {
+          console.log('No matching documents.');
+        } 
+        
+          const userDoc = snapshot.docs[0];
+          const notifications  = userDoc.data().messageNotifications
+          const newNotifications = [socket.user, ...notifications]
+          await userDoc.ref.update({ messageNotifications: newNotifications });
+        }catch(e){
+          console.log(e)
+        }
+      }
       try {
         const userRef = db.collection('users');
         const snapshot = await userRef.where('userName', '==', socket.user).limit(1).get();
@@ -264,7 +285,7 @@ const configureSocketServer = (server) => {
           const userDoc = snapshot.docs[0];
           const friendList  = userDoc.data().friendList 
           const user = userDoc.data()
-          const newTokens = user.tokens -10
+          const newTokens = user.tokens -5
         const friendIndex = friendList.findIndex(f => f.userName === friend.userName);
     if (friendIndex !== -1) {
       // Append the new message to the friend's messages array
@@ -312,26 +333,7 @@ const configureSocketServer = (server) => {
       console.log("message", message)
       console.log("socket.user", socket.user)
       console.log("friend", friend.userName)
-      const friendSocket = getFriendSocket(friend.userName)
-      if (friendSocket) {
-        
-        friendSock.emit('privateMessage', {message:{message, from: "friend", at: firebaseDate}, userName: socket.user});
-      }else{
-        try {
-        const userRef = db.collection('users');
-        const snapshot = await userRef.where('userName', '==', friend.userName).limit(1).get();
-        if (snapshot.empty) {
-          console.log('No matching documents.');
-        } 
-        
-          const userDoc = snapshot.docs[0];
-          const notifications  = userDoc.data().messageNotifications
-          const newNotifications = [socket.user, ...notifications]
-          await userDoc.ref.update({ messageNotifications: newNotifications });
-        }catch(e){
-          console.log(e)
-        }
-      }
+      
     });
 
     socket.on('sendImage', async ({data, friend, id, downloadLink} ) => {

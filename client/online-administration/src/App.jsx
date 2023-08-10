@@ -10,6 +10,8 @@ import Profile from "./pages/Profile"
 import Authentication from './pages/Authentication';
 import Gallery from './pages/Gallery';
 import UserProfilePage from './components/UserProfilePage';
+import Latest from './pages/Latest';
+
 import UserContext from './UserContext';
 import SocketContext from './SocketConetxt';
 import ImageContext from './ImageContext';
@@ -23,6 +25,8 @@ import { NotificationProvider } from './NotificationContext';
 import Chat3 from './components/Chat3';
 import Navbar from './components/Navbar';
 import Terms from './components/Terms';
+import UserGuide from './components/UserGuide';
+import Privacy from './components/Privacy';
 
 //add error page
 const App = () => {
@@ -81,9 +85,13 @@ const App = () => {
       socket.on("messageReceived", data => {
         setMessagesNotif([...messagesNotif, data])
       })
+      socket.on("addedFriend", ()=> {
+        fetchUserData();
+      })
       return () => {
         socket.off('onlineList');
         socket.off('messageReceived');
+        socket.off('addedFriend');
       }
     }
   }, [socket])
@@ -179,9 +187,12 @@ const createSocketConnection = (token) => {
           element={isLoggedIn || isAuthenticated ? <Navigate to="/home" /> : <Login setIsLoggedIn={setIsLoggedIn} setIsAuthenticated={setIsAuthenticated} setUser={setUser} setSocket={setSocket} setToken={setToken} />}
         />
         <Route path="/termsAndConditions" element={<Terms/>} />
+        <Route path="/userGuide" element={<UserGuide/>} />
+        <Route path="/privacy" element={<Privacy/>} />
         <Route path="/register" element={isLoggedIn || isAuthenticated ? <Navigate to="/home" /> : <Authentication setIsLoggedIn={setIsLoggedIn} setIsAuthenticated={setIsAuthenticated} setUser = {setUser}/>} />
         <Route path="/register/:myUserData" element={isLoggedIn || isAuthenticated ? <Navigate to="/home" /> : <Authentication setIsLoggedIn={setIsLoggedIn} setIsAuthenticated={setIsAuthenticated} setUser = {setUser}/>} />
         <Route path="/home" element={isLoggedIn || isAuthenticated ? <Home /> : <Navigate to= "/login"/> }/>
+        <Route path="/latest" element={ <Latest />}/>
         <Route path="/shop" element={isLoggedIn ? <Shop /> : <Navigate to="/login" />} />
         <Route path="/profile" element={isLoggedIn ? <Profile /> : <Navigate to="/login" />} />
         <Route path="/gallery" element={isLoggedIn ? <Gallery /> : <Navigate to="/login" />} />

@@ -100,15 +100,11 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
         console.log(`connect_error due to ${err.message}`);
       });
 
-      socket.on("disconnect", () => {
-        console.log(`disconnected`);
-      });
       return () => {
 
         socket.off('liked');
         socket.off('connect');
         socket.off("connect_error");
-        socket.off("disconnect");
       }
     }
 
@@ -145,7 +141,7 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
     setChatOpened(false)
   },[])
 
-  return (<div className="h-screen w-full">
+  return (<>  {!inCall && <div className="h-screen w-full">
   {imageContext !== null && <div className="absolute flex flex-col bg-slate-900 items-center justify-center w-full h-full">
                 <TransformWrapper >
                     <TransformComponent >
@@ -187,7 +183,8 @@ const Home = ({ setIsAuthenticated, setIsLoggedIn, setUser }) => {
         ))}
       </div>
 
-    </div>)}</div>
+    </div>)}</div>}</>
+
   );
 }
 export default Home;

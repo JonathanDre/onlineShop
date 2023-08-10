@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useRef, useCallback } from "react";
 import UserContext from './../UserContext';
-//import Peer from 'simple-peer'
+import Peer from 'simple-peer'
 import SocketContext from "../SocketConetxt";
 import MessageNotifContext from "../MessageNotifContext";
 import ImageContext from "../ImageContext";
@@ -24,8 +24,6 @@ import Error from "../components/Error"
 import { Link } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 import onlineContext from '../onlineContext';
-import { Peer } from "peerjs";
-import { selectClasses } from "@mui/material";
 const Chat3 = () => {
     const [wantsToSendImage, setWantstoSendImage] = useState(false)
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -68,138 +66,405 @@ const Chat3 = () => {
     const [isAnotherCameraEnabled, setIsAnotherCameraEnabled] = useState(false);
     const [isAnotherMicEnabled, setIsAnotherMicEnabled] = useState(true);
     const [error, setError] = useState("")
-    const [userToCall, setUserToCall] = useState(null)
-    const [myId, setMyId] = useState(null)
-    const [offline, setOffline] = useState(false)
-    const peerRef = useRef()
 
-console.log("stream", stream)
+    console.log("MICROPHONEOUTSIDE", isAnotherMicEnabled)
+    console.log("CameraEOUTSIDE", isCameraEnabled)
+    console.log("InCallOutside", inCall)
+    console.log("callEndedOutside", callEnded)
+    console.log("isReceiveingCall", isReceiveingCall)
+    console.log("inChat", inChat)
+    console.log("callAccepted", callAccepted)
+    console.log("selectedFriend", selectedFriend)
+    console.log("caller", caller)
+    console.log("user.userName", user.userName)
+
     /////////////////video CHAT functionality
-
-    /*useEffect(() => {
-        const peer = new Peer()
-
-        peer.on('open', (id) => {
-            setMyId(id)
-        })
-        peerRef.current = peer
-    }, [])*/
     useEffect(() => {
         if (timer) {
             clearTimeout(timer); // Clear previous timer
         }
 
-        if (isReceiveingCall && caller) {
+        if (selectedFriend && isCalling) {
             const newTimer = setTimeout(() => {
                 declineAuto();
             }, 30000); // Set timer for 30 seconds
             setTimer(newTimer);
         }
-    }, [isReceiveingCall, caller])
+    }, [isCalling, selectedFriend])
+
+
+
+
+
+    useEffect(() => {
+        if (socket) {
+
+            socket.on("callUser", (data) => {
+                console.log("dataonCallUser", data)
+                console.log("callUserReceived", data)
+
+
+                setCaller(data.from)
+                setIsReceiveingCall(true)
+                setCallAccepted(false);
+                setIsCallRejected(false)
+                setCallerSignal(data.signal)
+
+            })
+
+            socket.on("error", () => {
+                console.log("errrroror")
+            })
+
+            socket.on("cameraOn", () => {
+                console.log("cameraOnbefore", isAnotherCameraEnabled)
+                setIsAnotherCameraEnabled(true)
+                console.log("cameraafter", isAnotherCameraEnabled)
+                console.log("myVideo.current", myVideo)
+                console.log("myVideo.current", myVideo.current)
+
+            })
+            socket.on("cameraOff", () => {
+                console.log("cameraOFFbefore", isAnotherCameraEnabled)
+                setIsAnotherCameraEnabled(false)
+                console.log("cameraAfter", isAnotherCameraEnabled)
+            })
+            socket.on("micOn", () => {
+                console.log("micOnBefore", isAnotherMicEnabled)
+                setIsAnotherMicEnabled(true)
+                console.log("micOn", isAnotherMicEnabled)
+            })
+            socket.on("micOff", () => {
+                console.log("micOff", isAnotherMicEnabled)
+                setIsAnotherMicEnabled(false)
+                console.log("micOffAfter", isAnotherMicEnabled)
+            })
+
+            socket.on("autodecline", () => {
+                setIsCallRejected(true)
+                setIsReceiveingCall(false)
+                setCallEnded(true)
+                setCaller("")
+                setCallerSignal("")
+                setCallAccepted(false);
+                if (connectionRef.current) {
+                    connectionRef.current.destroy();
+                }
+            })
+
+            socket.on("leaveCall", () => {
+                // If the user is in a call and receives a leaveCall event,
+                // it means the other participant has left the call,
+                // so we need to leave the call as well
+
+                leaveCallReceived();
+            });
+
+            socket.on("declined", () => {
+                setIsCallRejected(true)
+                setCallEnded(true)
+                setCallAccepted(false)
+                setIsCalling(false)
+                setInCall(false)
+                if (connectionRef.current) {
+
+                    console.log("connection destroyed")
+                }
+
+
+            })
+            socket.on('disconnect', () => {
+                console.log("socket disconnected")
+            });
+            socket.on("cancelCall", () => {
+                setIsCallRejected(true)
+                setCallEnded(true)
+                setIsReceiveingCall(false)
+                setCallAccepted(false)
+                setIsCalling(false)
+            })
+            return () => {
+                socket.off('cancelCall');
+                socket.off('declined');
+                socket.off('leaveCall');
+                socket.off('autodecline');
+                socket.off('micOn');
+                socket.off('micOff');
+                socket.off('cameraOn');
+                socket.off('cameraOff');
+                socket.off('error');
+                socket.off('disconnect');
+                socket.off('callAccepted');
+                socket.off('callUser');
+
+            };
+        }
+    }, [socket, inChat])
+    const callUser = async (id) => {
+
+        fetch(`${import.meta.env.VITE_SERVER_URL}/user/onCallPrice`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ toCall: id })
+        }).then(res => res.json())
+            .then(data => {
+                console.log("data", data)
+                if (data.errors) {
+                    setError(data.errors)
+                    setInCall(false)
+                    setCallAccepted(false)
+                    setCallEnded(true)
+                    setIsCallRejected(true)
+                    setTimeout(() => {
+                        navigate('/shop');
+                    }, 3000)
+                    return
+                }
+                setUser({ ...user, tokens: data.tokens, calls: data.calls })
+            })
+
+        setInCall(true)
+        setCallAccepted(false)
+        setCallEnded(false)
+        setIsCallRejected(false)
+
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(async (stream1) => {
+            const response =
+                await fetch("https://freyada.metered.live/api/v1/turn/credentials?apiKey=6f295be0ba65de2dc9c1e230bbd227c099e8");
+
+            // Saving the response in the iceServers array
+            const moreIceServers = await response.json();
+
+            const iceServers = [{
+                urls: "turn:relay1.expressturn.com:3478",
+                username: "efJ2BT0ONGMZUE50XW",
+                credential: "kxaJtzEhQCcWFAxX",
+            }, {
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }, {
+                urls:
+                    'stun:stun2.l.google.com:19302',
+            }, { urls: 'stun:stun1.l.google.com:19302' }, ...moreIceServers]
+            setStream(stream1)
+            console.log("stream useState", stream)
+            console.log("stream1 in callUser", stream1)
+            const peer = new Peer({
+                initiator: true,
+                trickle: false,
+                stream: stream1,
+                config: { iceServers: iceServers }
+
+            })
+            console.log("peer in callUser", peer)
+            peer.on('error', err => {
+                console.log('error', err)
+                leaveCallSent()
+            })
+            peer.on("signal", (data) => {
+                console.log("there is a signal and the user To Call is :", id)
+                socket.emit("callUser", {
+                    userToCall: id,
+                    signalData: data,
+                    from: user.userName,
+                    name: name
+                })
+                setIsCalling(true)
+            })
+            peer.on('close', () => { console.log('peer closed'); socket.off("callAccepted"); });
+            peer.on("stream", (stream2) => {
+                if (myVideo.current && userVideo.current) {
+                    myVideo.current.srcObject = stream1
+
+                    console.log("in the on Stream1: ", stream1)
+                    console.log("in the on Stream2: ", stream2)
+
+                    userVideo.current.srcObject = stream2
+                }
+            })
+
+            connectionRef.current = peer;
+
+            socket.on("callAccepted", (signal) => {
+                console.log("Received signal:", signal);
+                console.log("Peer:", peer);
+                console.log("Another user accepted the call");
+                setIsCallRejected(false)
+                setCallEnded(false)
+                setCallAccepted(true),
+                    setInChat(true)
+                setIsCalling(false)
+                setUser({ ...user, tokens: user.tokens - 50 })
+
+                peer.signal(signal);
+            })
+
+        }).catch((error) => {
+            console.error('Error accessing media devices:', error);
+        });
+    }
+
 
     const declineAuto = () => {
+        setIsCalling(false)
+        setCallEnded(true)
+        setIsCallRejected(true)
+        setInCall(false)
+        if (timer) {
+            clearTimeout(timer);
+        }
+        socket.emit("autodecline", (selectedFriend.userName))
+    }
+
+    const declineCall = () => {
+        setIsCallRejected(true)
+        socket.emit("declined", (caller), (error) => {
+            console.log("error", error)
+            return
+        })
+        if (connectionRef.current) {
+
+        }
         setIsReceiveingCall(false)
-        socket.emit("declined", { to: caller })
-        setCaller(null)
+        setCallEnded(true)
+        setCaller("")
+        setCallerSignal("")
+        setCallAccepted(false);
+
+    }
+
+
+
+    const answerCall = () => {
+        fetch(`${import.meta.env.VITE_SERVER_URL}/user/onAnswerPrice`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ caller: caller })
+        }).then(res => res.json())
+            .then(data => {
+                if (data.errors) {
+                    setError(data.errors)
+                    setIsReceiveingCall(false)
+                    setInCall(false)
+                    setCallAccepted(false)
+                    setCallEnded(true)
+                    setIsCallRejected(true)
+                    return
+                }
+                setUser({ ...user, tokens: data.tokens, calls: data.calls })
+            })
+        setIsReceiveingCall(false)
+        setInCall(true)
+        setCallAccepted(true)
+        setCallEnded(false)
+        setIsCallRejected(false)
+
+        console.log("callAnswered")
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(async (stream1) => {
+            setStream(stream1)
+            const response =
+                await fetch("https://freyada.metered.live/api/v1/turn/credentials?apiKey=6f295be0ba65de2dc9c1e230bbd227c099e8");
+
+            // Saving the response in the iceServers array
+            const moreIceServers = await response.json();
+
+            const iceServers = [{
+                urls: "turn:relay1.expressturn.com:3478",
+                username: "efJ2BT0ONGMZUE50XW",
+                credential: "kxaJtzEhQCcWFAxX",
+            }, {
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }, {
+                urls:
+                    'stun:stun2.l.google.com:19302',
+            }, { urls: 'stun:stun1.l.google.com:19302' }, ...moreIceServers]
+            const peer = new Peer({
+                initiator: false,
+                trickle: false,
+                stream: stream1,
+                config: { iceServers: iceServers },
+            })
+
+            
+            peer.on('error', err => {
+                console.log("err",err)
+                leaveCallSent()
+
+            })
+            peer.on("signal", (data) => {
+                socket.emit("answerCall", { signal: data, to: caller })
+                setInChat(true)
+                setInCall(true)
+            })
+            peer.on('close', () => { console.log('peer closed'); });
+            peer.on("stream", (stream2) => {
+                console.log("Peer:", peer);
+                if (myVideo.current && userVideo.current) {
+
+                    myVideo.current.srcObject = stream1
+                    userVideo.current.srcObject = stream2
+                }
+            })
+            
+
+            peer.signal(callerSignal)
+
+            connectionRef.current = peer
+        }).catch((error) => {
+            console.error('Error accessing media devices:', error);
+        });
     }
 
     useEffect(() => {
-        socket.on("getId", (data) => {
+        if (stream && isCallRejected) {
 
-            if (inCall || isReceiveingCall) {
-                socket.emit("declined", { to: data.to })
-                return
-            }
-            console.log("getId socket")
-            const peer = new Peer()
-            setCaller(data.caller)
-
-            peer.on('open', (id) => {
-                setMyId(id)
-                setIsReceiveingCall(true)
-
-            })
-            peerRef.current = peer
-        })
-        socket.on('disconnect', () => {
-            console.log("socket disconnected")
-        });
-
-        socket.on("returnId", (data) => {
-            console.log("returnId  socket")
-            console.log("id", data.id)
-            setUserToCall(data.id)
-            callUser(data.id)
-            setIsCalling(false)
-        })
-
-        socket.on("cancelCall", () => {
-            setIsReceiveingCall(false)
-            setCaller(null)
-        })
-
-        socket.on("declined", () => {
-            setIsCalling(false)
-            //add timeout to restore to false 
-            setIsCallRejected(true)
-        })
-
-        socket.on("leaveCall", () => {
-            console.log("leaveCall")
-            leaveCallReceived()
-        })
-
-        return () => {
-            socket.off('leaveCall');
-            socket.off('getId');
-            socket.off('returnId');
-            socket.off('declined');
-            socket.off('cancelCall');
-            socket.disconnect()
-        };
-    }, [])
-    ///////////////////////////////////////////
+            stopCameraStream(stream)
 
 
-    useEffect(() => {
-        if (peerRef.current) {
-            peerRef.current.on("call", (call) => {
-                console.log("callAnswered")
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(async (stream) => {
-                    setStream(stream)
-                    call.answer(stream)
-                    console.log("callAnswered")
-                    call.on("stream", (remoteStream) => {
-                        console.log("callAnswered")
-                        setInCall(true);
-                        setTimeout(() => {
-                            userVideo.current.srcObject = remoteStream
-                            myVideo.current.srcObject = stream
-                        }, 2000);
-                    })
-                },
-                    (err) => {
-                        console.error(`The following error occurred: ${err.name}`);
-                    },
-                );
-                console.log("getUserMedia not supported");
-            })
-            // if in Call do this 
         }
-    }, [peerRef.current])
+    }, [stream, isCallRejected])
+
+
+    const stopCameraStream = (stream) => {
+        console.log("stream", stream)
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => {
+            track.stop();
+        });
+    };
 
     const leaveCallSooner = () => {
-        setInCall(false)
         setIsCalling(false)
         socket.emit("cancelCall", (selectedFriend.userName))
-
-        if (stream) {
-            stopCameraStream(stream)
+        console.log("selectedFriend", selectedFriend)
+        console.log("leftCallsooner")
+        setIsCallRejected(true)
+        setCallEnded(true);
+        setInChat(false)
+        setCallAccepted(false); // Reset callAccepted state
+        setCaller(""); // Reset caller state
+        setCallerSignal("");
+        if (connectionRef.current) {
+            connectionRef.current.destroy();
         }
+        setInCall(false)
         //window.location.reload()
     }
 
     const leaveCallSent = () => {
+        console.log("leftCallsooner")
+        console.log("myVideo", myVideo)
+        console.log("userVideo", userVideo)
         if (myVideo.current) {
 
             myVideo.current.srcObject = null
@@ -214,51 +479,25 @@ console.log("stream", stream)
             socket.emit("leaveCall", (selectedFriend.userName))
 
         }
-        if (stream) {
-            stopCameraStream(stream)
+        setCallEnded(true);
+        setInChat(false)
+        setIsCallRejected(true)
+        //connectionRef.current.destroy();
+        setCallAccepted(false); // Reset callAccepted state
+        setCaller(""); // Reset caller state
+        setCallerSignal(""); // Reset callerSignal state
+        setIsAnotherMicEnabled(true)
+        setIsAnotherCameraEnabled(false)
+        setIsMicEnabled(true)
+        setIsCameraEnabled(false)
+        if (connectionRef.current) {
+            connectionRef.current.destroy();
         }
-        // Reset callAccepted state
-        setCaller(null); // Reset caller state
         setInCall(false)
+
+        //window.location.reload()isMicEnabled
+
     }
-
-    const leaveCallReceived = () => {
-        console.log("leaveCall received")
-        console.log("stream", stream)
-        if (myVideo.current) {
-
-            myVideo.current.srcObject = null
-        }
-        if (userVideo.current) {
-
-            userVideo.current.srcObject = null
-        }
-        if (stream) {
-            stopCameraStream(stream)
-        }
-        // Reset callAccepted state
-        setCaller(null); // Reset caller state
-        setInCall(false)
-    }
-
-    const callUser = (userToCall) => {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(async (stream) => {
-            setStream(stream)
-            console.log("calling user")
-            const call = peerRef.current.call(userToCall, stream)
-
-            call.on('stream', (remoteStream) => {
-                setInCall(true);
-                setTimeout(() => {
-                    console.log("received stream after call User")
-                    userVideo.current.srcObject = remoteStream
-                    myVideo.current.srcObject = stream
-                }, 2000);
-            })
-        })
-    }
-
-    //cameraa
     const enableMic = () => {
         if (caller && caller !== "" && caller !== null) {
             socket.emit("micOn", caller)
@@ -304,108 +543,87 @@ console.log("stream", stream)
             }
     };
 
-    const exchangeId = (userId) => {
-        console.log("emited get id")
-        const peer = new Peer()
+    const leaveCallReceived = () => {
+        console.log("myVideo", myVideo)
+        console.log("userVideo", userVideo)
+        console.log("leffffffft")
+        if (myVideo.current) {
 
-        peer.on('open', (id) => {
-            setMyId(id)
-            setIsCalling(true)
-            socket.emit('getId', { myId: id, user: user.userName, to: userId })
-        })
-        peerRef.current = peer
-    }
-
-    useEffect(() => {
-        if (isCallRejected) {
-            setTimeout(() => {
-                setIsCallRejected(false)
-            }, 3000)
+            myVideo.current.srcObject = null
         }
-    }, [isCallRejected])
+        if (userVideo.current) {
 
-    const stopCameraStream = (stream) => {
-        console.log("stream", stream)
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => {
-            track.stop();
-        });
-        setStream(null)
-    };
+            userVideo.current.srcObject = null
+        }
+        // connectionRef.current.destroy();
+        setCallEnded(true);
+        setInChat(false)
+        setCallAccepted(false); // Reset callAccepted state
+        setIsCallRejected(true)
+        setCallerSignal(""); // Reset callerSignal state
+        setIsAnotherMicEnabled(true)
+        setIsAnotherCameraEnabled(false)
+        setIsMicEnabled(true)
+        setIsCameraEnabled(false)
+        if (connectionRef.current) {
+            connectionRef.current.destroy();
+        }
+        setCaller(""); // Reset caller state
+        setInCall(false)
+        //window.location.reload()
 
-    /*useEffect(()=>{
-if (stream && !inCall){
-          stream.getTracks().forEach(track => track.stop());
-          
-          setStream(null)
-}
-    }, [stream, inCall])*/
+    }
+
+
+
+    ///////////////////////////////////////////
+
+
 
     useEffect(() => {
 
-        // Event listeners for socket events
-        setName(user.userName)
-        socket.on('receiveImage', ({ message, from, at, image, id, blured, downloadLink }) => {
-            setReceivedImage(message);
-            setMessages((prevMessages) => [...prevMessages, { message: message, from: from, id: id, at: at, image: image, blured: blured, downloadLink: downloadLink }])
-        });
-        socket.on("chatInitiated", (message) => {
-            console.log(message);
-        })
 
-        socket.on("cameraOn", () => {
-            setIsAnotherCameraEnabled(true)
-console.log("stream", stream)
-        })
-        socket.on("cameraOff", () => {
-            setIsAnotherCameraEnabled(false)
-        })
-        socket.on("micOn", () => {
-            setIsAnotherMicEnabled(true)
-        })
-        socket.on("micOff", () => {
-            setIsAnotherMicEnabled(false)
-        })
+        if (user && socket) {
 
-        socket.on('privateMessage', ({ message, userName }) => {
-            // console.log(user.friendList)
-            const friendIndex = user.friendList.findIndex(f => f.userName === userName)
-            const newestUser = user
-            newestUser.friendList[friendIndex].messages.push(message)
-            setUser(newestUser)
-            setMessages((prevMessages) => [...prevMessages, message]);
-        });
-        socket.on('message', (message) => {
-            console.log(message)
-        });
-        return () => {
-            socket.off('receiveImage');
-            socket.off('chatInitiated');
-            socket.off('privateMessage');
-            socket.off('message');
-            socket.off('cameraOn');
-            socket.off('cameraOff');
-            socket.off('micOn');
-            socket.off('micOff');
-        };
-        // Clean up the socket connection when the component is unmounted
-        ;
+            // Event listeners for socket events
+            setName(user.userName)
+            socket.on('receiveImage', ({ message, from, at, image, id, blured, downloadLink }) => {
+                setReceivedImage(message);
+                setMessages((prevMessages) => [...prevMessages, { message: message, from: from, id: id, at: at, image: image, blured: blured, downloadLink: downloadLink }])
+                console.log("receivedImage", receivedImage)
+            });
+            socket.on("chatInitiated", (message) => {
+                console.log(message);
+            })
 
-    }, []);
+            socket.on('privateMessage', ({ message, userName }) => {
+                // console.log(user.friendList)
+                console.log("user list private message", user.friendList)
+                const friendIndex = user.friendList.findIndex(f => f.userName === userName)
+                console.log("friendIndex", friendIndex)
+                console.log("user.friendlist[friendIndex]", user.friendList[friendIndex])
+                const newestUser = user
+                newestUser.friendList[friendIndex].messages.push(message)
+                setUser(newestUser)
+                console.log("user", newestUser)
+                console.log(message)
+                console.log(messages)
+                setMessages((prevMessages) => [...prevMessages, message]);
+            });
+            socket.on('message', (message) => {
+                console.log(message)
+            });
+            return () => {
+                socket.off('receiveImage');
+                socket.off('chatInitiated');
+                socket.off('privateMessage');
+                socket.off('message');
+            };
+            // Clean up the socket connection when the component is unmounted
+            ;
+        }
 
-    const acceptCall = () => {
-        //isReceiveingCalling true
-        //caller true
-        socket.emit("returnId", { to: caller, id: myId })
-        setIsReceiveingCall(false)
-        setCallAccepted(true)
-    }
-    const declineCall = () => {
-        //callAccepted false
-        //caller true
-        socket.emit("declined", { to: caller })
-        setIsReceiveingCall(false)
-    }
+    }, [socket, user]);
 
 
     const handleImageChange = (event) => {
@@ -471,6 +689,7 @@ console.log("stream", stream)
             return
         }
         if (selectedFriend) {
+            console.log("selectedFriend", selectedFriend)
             socket.emit('privateMessage', {
                 friend: selectedFriend,
                 message: message
@@ -490,10 +709,15 @@ console.log("stream", stream)
 
     useEffect(() => {
         if (messages && messages.length > 0) {
+            console.log("messages", messages)
             const startIndex = Math.max(0, messages.length - messageIndex);
+            console.log("startIndex", startIndex)
+            console.log("messageIndex", messageIndex)
             if (startIndex > 0 && messages.length < messageIndex) {
                 setVisibleMessages(messages.slice(messages.length - 1));
+                console.log("setVisibleemessages", messages)
             } else if (startIndex === 0) {
+                console.log("setVisibleemessages", messages)
                 setVisibleMessages(messages);
             } else {
                 setVisibleMessages(messages.slice(startIndex));
@@ -534,6 +758,9 @@ console.log("stream", stream)
             setVisibleMessages([])
             setMessageIndex(5)
         } else {
+            console.log(selectedFriend)
+            console.log("messages", messages)
+            console.log("visiblemessages", visibleMessages)
             setSelectedFriend(friend);
             setMessageIndex(5)
             await fetch(`${import.meta.env.VITE_SERVER_URL}/user/updateList`, {
@@ -545,16 +772,23 @@ console.log("stream", stream)
                 body: JSON.stringify({ friend: friend.userName })
             }).then(async (response) => {
                 updateFriendList(friend)
+                console.log(response)
                 const friendInfo = friendList.find((Friend) => Friend.email === friend.email);
+                console.log("friendInfo", friendInfo)
                 await fetchSelectedFriend();
                 setMessages(friendInfo.messages);
+                console.log("messages", messages)
+                console.log("visiblemessages", visibleMessages)
                 socket.emit('startChat', friend);
             }).catch((err) => {
+                console.log("error", err)
             })
         }
     }
 
     const handleSetMessageSeen = async (friend) => {
+        console.log("executing sec")
+        console.log("friend")
         await fetch(`${import.meta.env.VITE_SERVER_URL}/user/updateMessageNotif`, {
             method: "POST",
             headers: {
@@ -563,10 +797,12 @@ console.log("stream", stream)
             },
             body: JSON.stringify({ name: friend.userName })
         }).then((response) => {
+            console.log(response)
             const newMessages = messagesNotif.filter(f => f !== friend.userName)
             setMessagesNotif(newMessages)
             handleFriendClick(friend)
         }).catch((err) => {
+            console.log("error", err)
         })
     }
 
@@ -587,6 +823,7 @@ console.log("stream", stream)
         if (user && user.friendList && user.friendList.length > 0) {
             setFriendList(user.friendList)
         }
+        console.log("userList", user.friendList)
     }, [user])
     const imageStyle = {
         filter: 'blur(7px)',
@@ -640,7 +877,9 @@ console.log("stream", stream)
             body: JSON.stringify({ id: message.id, price: 50, from: selectedFriend.userName, url: message.url })
         }).then(response => response.json()) // Parse the response as JSON
             .then(async data => {
+                console.log(data)
                 if (data.errors) {
+                    console.log("in the error")
                     setError(data.errors)
                     setShowConfirmation(false)
                     setUnblockedImage(null)
@@ -648,6 +887,7 @@ console.log("stream", stream)
                     return
                 }
                 if (data.photo) {
+                    console.log(data)
                     const newPhotos = [data.photo, ...user.photos]
                     setUser({ ...user, photos: newPhotos, tokens: user.tokens - 50 })
                     setShowConfirmation(false)
@@ -656,6 +896,7 @@ console.log("stream", stream)
                     return
                 }
                 if (data.data) {
+                    console.log(data)
                     setUser({ ...user, photos: data.data.photos, tokens: data.data.tokens })
                     setShowConfirmation(false)
                     setUnblockedImage(null)
@@ -677,6 +918,7 @@ console.log("stream", stream)
                 console.error('Error fetching data:', error);
             });
         // Handle click event for blurred images
+        console.log('Image clicked:', message.id);
         // Perform any other actions you want
     };
 
@@ -706,10 +948,15 @@ console.log("stream", stream)
         list = []
     }
 
+    console.log("online", online)
     function openFullscreen(imageUrl) {
+        console.log("chatOpened", chatOpened)
+        console.log("imageCOntext", imageContext)
+        console.log("imageUrl", imageUrl)
         setImageContext(imageUrl)
         setTimeout(() => {
 
+            console.log("imageCOntext", imageContext)
         }, 10000)
         // Add a click event listener to close the fullscreen view
 
@@ -729,6 +976,8 @@ console.log("stream", stream)
     useEffect(() => {
         const chatContainer = document.getElementById('chat-container');
         if (messages && chatContainer) {
+            console.log('Chat container height:', chatContainer.scrollHeight);
+            console.log('Chat container client height:', chatContainer.clientHeight);
             chatContainer.scrollTo(0, chatContainer.scrollHeight);
         }
     }, [messages]);
@@ -739,7 +988,7 @@ console.log("stream", stream)
 
     return (
         <>
-            {/*inCall && (
+            {inCall && (
                 <div className=" relative w-screen h-screen flex flex-col justify-center items-center bg-black">
 
                     <div className="flex video h-full w-full ">
@@ -767,58 +1016,24 @@ console.log("stream", stream)
                         <div className="flex">{inCall && callAccepted && isMicEnabled && (<MicNoneIcon fontSize="large" className="bg-transparent text-white  cursor-pointer rounded-2xl my-3" onClick={() => disableMic()} />)}</div>
                         <div className="flex">{inCall && callAccepted && !isCameraEnabled && (<CameraAltOutlinedIcon fontSize="large" className="bg-transparent cursor-pointer text-red-500 my-3 rounded-2xl" onClick={() => enableCamera()} />)}</div>
                         <div className="flex">{inCall && callAccepted && isCameraEnabled && (<CameraAltOutlinedIcon fontSize="large" className="bg-transparent cursor-pointer text-white my-3 rounded-2xl" onClick={() => disableCamera()} />)}</div>
-                        
-                        
+                        <div className="flex">{inCall && callAccepted && (<button className="bg-transparent text-red-500 rounded-2xl" onClick={() => leaveCallSent()}>Leave</button>)}</div>
+                        <div>{isCalling ? (<button className="bg-transparent text-red-500 rounded-2xl" onClick={() => leaveCallSooner()}>Cancel</button>) : null}</div>
                     </div>
-                </div>)
-            */
-            }
+                </div>)}
 
 
 
-            {isReceiveingCall && caller !== "" && myId &&
+            {isReceiveingCall && caller !== "" && callerSignal !== "" &&
                 <div className="fixed top-20 rounded-2xl items-center text-center justify-center left-1/2 bg-black z-10" style={{ transform: 'translateX(-50%)' }}>
                     <div className="flex flex-col items-center justify-center ">
                         <p className="flex my-1">{caller} is calling</p>
                         <div className="flex flex-row justify-center items-center">
-                            {isReceiveingCall && (<button className="mx-3 bg-transparent rounded-2xl text-green-500" onClick={() => acceptCall()}>Answer</button>)}
+                            {isReceiveingCall && (<button className="mx-3 bg-transparent rounded-2xl text-green-500" onClick={() => answerCall()}>Answer</button>)}
                             {isReceiveingCall && (<button className="mx-3 bg-transparent rounded-2xl text-red-500" onClick={() => declineCall()}>Decline</button>)}
                         </div>
                     </div>
                 </div>}
-            {isCalling && selectedFriend && (<div className="relative flex items-center justify-center">
-                <p className="fixed top-1/2 left-1/2" style={{ transform: 'translateX(-50%)' }}>Calling {selectedFriend.userName}</p>
-                <button className="bg-transparent text-red-500 rounded-2xl" onClick={() => leaveCallSooner()}>Cancel</button>
-            </div>)}
-            {inCall && stream &&
-                <div className="relative w-full h-screen flex flex-col justify-center items-center bg-black">
-                    <div className="flex fixed left-1/4 top-2 video h-1/5 w-1/5 z-20" style={{ transform: 'translateX(-50%)' }}>
-                        <video className="w-full h-full"
-                            playsInline
-                            muted
-                            ref={myVideo}
-                            autoPlay
-                            style={{ display: isCameraEnabled ? 'block' : 'none' }}
-                        />
-                    </div>
-                    <video className="w-full h-full" playsInline
-                        ref={userVideo}
-                        autoPlay
-                        muted={!isAnotherMicEnabled}
-                        style={{ display: isAnotherCameraEnabled ? 'block' : 'none' }} />
-
-                    <div className="fixed right-5 bottom-10 flex flex-col justify-center items-center" >
-                        <div className="flex"><button className="bg-transparent text-red-500 rounded-2xl" onClick={() => leaveCallSent()}>Leave</button></div>
-                        <div className="flex">{!isMicEnabled && (<MicNoneIcon fontSize="large" className="bg-transparent text-red-500 cursor-pointer rounded-2xl my-3" onClick={() => enableMic()} />)}</div>
-                        <div className="flex">{isMicEnabled && (<MicNoneIcon fontSize="large" className="bg-transparent text-white  cursor-pointer rounded-2xl my-3" onClick={() => disableMic()} />)}</div>
-                        <div className="flex">{!isCameraEnabled && (<CameraAltOutlinedIcon fontSize="large" className="bg-transparent cursor-pointer text-red-500 my-3 rounded-2xl" onClick={() => enableCamera()} />)}</div>
-                        <div className="flex">{isCameraEnabled && (<CameraAltOutlinedIcon fontSize="large" className="bg-transparent cursor-pointer text-white my-3 rounded-2xl" onClick={() => disableCamera()} />)}</div>
-                        <div>{isCalling ? (<button className="bg-transparent text-red-500 rounded-2xl" onClick={() => leaveCallSooner()}>Cancel</button>) : null}</div>
-                    </div>
-                </div>
-            }
-
-            {!chatOpened && !inCall && !isCalling && friendList.length > 0 && <button className="chat-button bg-transparent text-black fixed right-5 bottom-1/4" onClick={() => toggleChat()}><img draggable="false" className="w-10 h-10" src={CHAT} />{messagesNotif && messagesNotif.length > 0 && (<div className=" absolute top-2 right-2 bg-red-500 rounded-full w-2 h-2 xl:w-4 xl:h-4"></div>)}</button>}
+            {!chatOpened && !inCall && friendList.length > 0 && <button className="chat-button bg-transparent text-black fixed right-5 bottom-1/4" onClick={() => toggleChat()}><img draggable="false" className="w-10 h-10" src={CHAT} />{messagesNotif && messagesNotif.length > 0 && (<div className=" absolute top-2 right-2 bg-red-500 rounded-full w-2 h-2 xl:w-4 xl:h-4"></div>)}</button>}
             {imageContext && <div className=" flex flex-col bg-slate-900 items-center justify-center max-w-screen max-h-screen">
                 <TransformWrapper >
                     <TransformComponent >
@@ -827,7 +1042,7 @@ console.log("stream", stream)
                 </TransformWrapper>
                 <div className="fixed top-5 right-5"><button className="bg-transparent border border-white text-white text-xl" onClick={() => closeImage()}>Close</button></div>
             </div>}
-            {chatOpened && !imageContext && !isCalling && !inCall && !chatOpenedAfterRedirect && (
+            {chatOpened && !imageContext && !inCall && !chatOpenedAfterRedirect && (
                 <div className=" chat mt-10 text-black h-full w-full fixed bg-white top-0 border-2 border-white flex flex-row">
                     {error && (<div className='fixed left-1/2 top-1/2 w-30 h-20 bg-black text-red-500 z-10' style={{ transform: 'translateX(-50%)' }}><Error error={error} /></div>)}
                     {sending && !error && (<div className='fixed top-1/2 left-1/2 w-20 h-10 bg-black p-4 rounded-2xl z-10' style={{ transform: 'translateX(-50%)' }}><Error error={"Sending ..."} /></div>)}
@@ -873,7 +1088,7 @@ console.log("stream", stream)
                                     {selectedFriend && selectedFriend.email && (
                                         <div className="flex flex-row justify-center w-full items-center text-center">
                                             <div className="flex flex-1 ml-2" ><Link className="text-white italic " to={`/users/${selectedFriend.userName}`}><button className="p-0 m-0 bg-transparent text-white italic" onClick={() => setChatAfterRedir()}>{selectedFriend.userName}</button></Link></div>
-                                            {selectedFriend !== null && selectedFriend.email && !inCall && (<PhoneEnabledOutlinedIcon fontSize="large" className=" mx-3 w-10 h-10 bg-transparent text-center text-green-500 items-center justify-center" onClick={() => exchangeId(selectedFriend.userName)} />)}
+                                            {selectedFriend !== null && selectedFriend.email && !inCall && (<PhoneEnabledOutlinedIcon fontSize="large" className=" mx-3 w-10 h-10 bg-transparent text-center text-green-500 items-center justify-center" onClick={() => callUser(selectedFriend.userName)} />)}
                                             {chatOpened && <div className=" mx-3 justify-center items-center text-center cursor-pointer"> <CloseIcon className="chat-button text-white" fontSize="large" onClick={() => toggleChat()} /></div>}
                                         </div>)}
                                     {!selectedFriend.hasOwnProperty("email") && chatOpened && <div className=" mx-3 justify-center items-center text-center cursor-pointer"> <CloseIcon className="chat-button text-white" fontSize="large" onClick={() => toggleChat()} /></div>}

@@ -223,10 +223,11 @@ const UserProfilePage = () => {
       .then((data) => {
         console.log("data", data)
         // Access the user information from the response data
-        const { friendList } = data.data;
+        const { friendList, calls } = data.data;
         console.log("data", friendList)
-        setUser({ ...user, friendList: friendList })
+        setUser({ ...user, friendList: friendList, calls: calls })
         setChatOpened(true)
+        socket.emit("addedFriend", otherUser.userName)
         console.log("userASDASDASDASDASDSADASD", user)
         // Do something with the user information
       })
@@ -242,7 +243,7 @@ const UserProfilePage = () => {
   }, [])
   const handleUnblock = (message) => {
     if (user.tokens < 50) {
-      setError("Not enought tokens")
+      setError("You need 50 tokens to unlock")
       setTimeout(()=> {
         navigate("/shop")
         
@@ -340,7 +341,7 @@ const UserProfilePage = () => {
 
   return (
     <>
-      {error && <div className='fixed top-15 left-1/2 top-1/2 w-30 h-20 bg-black text-red-500 z-10' style={{ transform: 'translateX(-50%)' }}><Error error={error} /></div>}
+      {error && <div className='fixed left-1/2 top-1/2 w-30 h-20 bg-black text-red-500 z-10' style={{ transform: 'translateX(-50%)' }}><Error error={error} /></div>}
       {imageContext && <div className=" flex flex-col bg-slate-900 items-center justify-center max-w-screen max-h-screen">
                 <TransformWrapper >
                     <TransformComponent >

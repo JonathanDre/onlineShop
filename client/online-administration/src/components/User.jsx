@@ -25,9 +25,11 @@ import noLike from "../assets/noLike.png"
 import redLike from "../assets/redLike.png"
 import profile2 from "../assets/profile2.png"
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
+import SocketContext from '../SocketConetxt';
 const User = ({ User }) => {
   const { user, setUser } = useContext(UserContext)
   const { online, setOnlline } = useContext(onlineContext)
+  const { socket } = useContext(SocketContext)
   const token = localStorage.getItem("token")
   const { chatOpened, setChatOpened, setChatWith } = useContext(ChatContext)
   const handleImageError = (event) => {
@@ -47,10 +49,11 @@ const User = ({ User }) => {
       .then((data) => {
         console.log("data", data)
         // Access the user information from the response data
-        const { friendList } = data.data;
-        console.log("data", friendList)
-        setUser({ ...user, friendList: friendList })
+        const { friendList, calls } = data.data;
+        console.log("dataFriendList", friendList)
+        setUser({ ...user, friendList: [...friendList], calls: calls })
         setChatOpened(true)
+        socket.emit("addedFriend", User.userName)
         console.log("userASDASDASDASDASDSADASD", user)
         // Do something with the user information
       })
@@ -117,7 +120,7 @@ const User = ({ User }) => {
         }}></div>
       </div>
       }
-      {User.subscription?.name === 'Silver' && <div className='absolute flex flex-row items-center justify-between w-12 h-12 -bottom-3 left-1/2' style={{
+      {User.subscription?.name === 'Silver' && <div className='absolute flex flex-row items-center justify-between w-12 h-12 -bottom-5 left-1/2' style={{
         background: `url(${Silverlips})`, backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover', backgroundPosition: 'center', transform: 'translateX(-50%)'
       }}>

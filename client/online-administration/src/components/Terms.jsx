@@ -3,8 +3,9 @@ const Terms = () => {
 
     return (
         <div className='flex flex-col items-center' style={{ background: 'linear-gradient(180deg, #000025 0%, #31019A 100%)' }}>
-            <div className='mt-5 self-end mr-5'>
-                <button className='bg-transparent border border-cyan-200 hover:bg-indigo-200 hover:text-white'><Link to = {"/register"}>Register</Link></button>
+            <div className=' flex flex-row mt-5 self-end mr-5'>
+                <button className='bg-transparent border border-cyan-200 hover:bg-indigo-200 hover:text-white mx-2'><Link to = {"/register"}>Register</Link></button>
+                <button className='bg-transparent border border-cyan-200 hover:bg-indigo-200 hover:text-white mx-2'><Link to = {"/login"}>Login</Link></button>
             </div>
             <div className=" p-5" style={{
               background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\' viewBox=\'0 0 533 366\' fill=\'none\'%3E%3Cpath d=\'M0 30C0 13.4315 13.4315 0 30 0H503C519.569 0 533 13.4315 533 30V336C533 352.569 519.569 366 503 366H30C13.4315 366 0 352.569 0 336V30Z\' fill=\'url(%23paint0_linear_353_105)\' fill-opacity=\'0.8\'/%3E%3Cdefs%3E%3ClinearGradient id=\'paint0_linear_353_105\' x1=\'167.007\' y1=\'565.656\' x2=\'141.019\' y2=\'-106.015\' gradientUnits=\'userSpaceOnUse\'%3E%3Cstop stop-color=\'%23362759\'/%3E%3Cstop offset=\'1\' stop-color=\'%235601F4\' stop-opacity=\'0\'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E")',
