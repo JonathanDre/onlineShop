@@ -6,6 +6,8 @@ import Gold from '../assets/Gold.png'
 import Diamond from '../assets/Diamond.png'
 import Ruby from '../assets/Ruby.png'
 import MONEY from "../assets/money.png"
+import { PaddleSDK } from 'paddle-sdk';
+
 const ItemComponent = ({ item }) => {
 
   const myMap = new Map([
@@ -26,7 +28,24 @@ const ItemComponent = ({ item }) => {
   const token = localStorage.getItem("token")
   const { user } = useContext(UserContext)
   const handleClick = async (item) => {
-    await fetch(`${import.meta.env.VITE_SERVER_URL}/subscriptions/create-checkout-session`, {
+
+async function run() {
+	const client = new PaddleSDK(
+		'176287',
+		'3a5cb0a519e85bacdc0444c583ee52a9cc6e766526a60572fa'
+	);
+
+	const products = await client.getProducts();
+	console.log(products);
+
+	const plans = await client.getProductPlans(123);
+	console.log(plans);
+}
+
+run();
+
+
+    /*await fetch(`${import.meta.env.VITE_SERVER_URL}/subscriptions/create-checkout-session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,9 +62,8 @@ const ItemComponent = ({ item }) => {
     })
       .then(({ url }) => {
         window.location = url
-      })
+      })*/
 
-    console.log(item)
   };
 
   return (
@@ -56,7 +74,7 @@ const ItemComponent = ({ item }) => {
         <p className='flex my-2 text-2md mx-1 rounded-full w-1/2 italic' style={{ color: myNewMap.get(item.data.name) }}>{item.data.value}</p>
         <img className='flex mx-1' src = {MONEY} />
       </div>
-      <button className='text-red-500 bg-transparent rounded-2xl border-solid border-2 border-indigo-100 cursor-pointer' onClick={() => handleClick(item)} style={{ color: myNewMap.get(item.data.name) }}>{item.data.price/100}€</button>
+      <button className='text-red-500 bg-transparent rounded-2xl border-solid border-2 border-indigo-100 cursor-pointer' onClick={() => run()} style={{ color: myNewMap.get(item.data.name) }}>{item.data.price/100}€</button>
     </div>
   );
 }
